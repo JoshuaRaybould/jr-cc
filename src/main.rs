@@ -91,7 +91,7 @@ fn main() {
 
     if mode > Modes::Lex {
         let res = parser.parse(); // Parse - parse but no generation.
-        println!("{:?}", res);
+        pretty_printer(res);
     } else if mode > Modes::Parse {
         todo!(); // Codegen - assembly generation.
     } else {
@@ -175,10 +175,6 @@ fn lexer(args: &str) -> Vec<Token> {
         }
     }
 
-    for token in &tokens {
-        println!("{:?}", token);
-    }
-
     return tokens;
 }
 
@@ -198,6 +194,9 @@ impl MyParser {
 
     fn parse(&mut self) -> Program {
         let func = self.parse_function();
+        if self.pos < self.tokens.len() {
+            panic!("Not all tokens consumed, currently at {:?}", self.tokens.get(self.pos));
+        }
         return Program(func);
     }
 
@@ -253,5 +252,54 @@ impl MyParser {
         };
         self.pos += 1;
         return *res;
+    }
+}
+
+fn get_indentation(indent: usize) -> String {
+    " ".repeat(4).repeat(indent)
+}
+
+fn pretty_printer(program : Program) {
+    let indent = 0;
+    let Program(func) = program;
+
+    println!("Program(");
+    pretty_print_function(func, indent + 1);
+    println!(")")
+}
+
+fn pretty_print_function(func: Function, indent: usize) {
+    let indentation = get_indentation(indent);
+    let Function(identifier, statement) = func; 
+
+    println!("{}Function(", indentation);
+    pretty_print_identifier(identifier, indent + 1);
+    pretty_print_statement(statement, indent + 1);
+    println!("{})", indentation);
+}
+
+fn pretty_print_identifier(identifier:  Identifier, indent: usize) {
+    let indentation = get_indentation(indent);
+    let Identifier(id_string) = identifier;
+    println!("{}name=\"{}\",", indentation, id_string);
+}
+
+fn pretty_print_statement(statement: Statement, indent: usize) {
+    let indentation = get_indentation(indent);
+
+    match statement {
+        Statement::Return(expression) => {
+            println!("{}body=Return(", indentation);
+            pretty_print_expression(expression, indent + 1);
+            println!("{})", indentation);
+        }
+    }
+}
+
+fn pretty_print_expression(expression: Expression, indent: usize) {
+    let indentation = get_indentation(indent);
+    
+    match expression {
+        Expression::Constant(val) => println!("{}Constant({})", indentation, val),
     }
 }

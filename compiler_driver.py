@@ -32,7 +32,9 @@ assembly_name = file_name[0:-1] + "s"
 # pass # Our compiler goes here!
 if args.lex:
     res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name])
-    print("Right here")
+    exit(res.returncode)
+elif args.parse:
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--parse"])
     exit(res.returncode)
 
 subprocess.run(['rm', preprocess_name])
