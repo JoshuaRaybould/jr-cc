@@ -5,7 +5,7 @@ use crate::lexer::do_lexing;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer;
 
-mod ast_c;
+mod asts;
 mod lexer;
 mod parser;
 
@@ -53,12 +53,15 @@ fn main() {
 
     let mut parser = MyParser { tokens, pos: 0 };
 
+    let parsed;
+    let ast_assembly;
     if mode > Modes::Lex {
-        let res = parser.parse(); // Parse - parse but no generation.
-        pretty_printer(res);
+        parsed = parser.parse(); // Parse - parse but no generation.
+        pretty_printer(parsed);
     } else if mode > Modes::Parse {
-        todo!(); // Codegen - assembly generation.
-    } else {
+        parsed = parser.parse();
+        ast_assembly = parser::ast_to_ast_a(parsed); // Codegen - assembly generation.
+    } else if mode > Modes::Codegen {
         todo!(); // emit code.
     }
 }

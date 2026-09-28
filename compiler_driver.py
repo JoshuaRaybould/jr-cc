@@ -31,12 +31,14 @@ subprocess.run(["gcc", "-E", "-P", file_name, "-o", preprocess_name])
 assembly_name = file_name[0:-1] + "s"
 # pass # Our compiler goes here!
 if args.lex:
-    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name])
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--lex"])
     exit(res.returncode)
 elif args.parse:
     res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--parse"])
     exit(res.returncode)
-
+elif args.codegen:
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--codegen"])
+    exit(res.returncode)
 subprocess.run(['rm', preprocess_name])
 """
 executable_name = file_name[0:-2]

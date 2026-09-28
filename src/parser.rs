@@ -1,4 +1,5 @@
-use crate::ast_c::*;
+use crate::asts::ast_a;
+use crate::asts::ast_c;
 use crate::lexer::Token;
 
 pub struct MyParser {
@@ -20,7 +21,7 @@ impl MyParser {
         }
     }
 
-    pub fn parse(&mut self) -> Program {
+    pub fn parse(&mut self) -> ast_c::Program {
         let func = self.parse_function();
         if self.pos < self.tokens.len() {
             panic!(
@@ -28,10 +29,10 @@ impl MyParser {
                 self.tokens.get(self.pos)
             );
         }
-        return Program(func);
+        return ast_c::Program(func);
     }
 
-    fn parse_function(&mut self) -> Function {
+    fn parse_function(&mut self) -> ast_c::Function {
         self.parse_tok(Token::Int);
         let identifier = self.parse_identifier();
         self.parse_tok(Token::OpenParen);
@@ -40,14 +41,14 @@ impl MyParser {
         self.parse_tok(Token::OpenCurlyBrace);
         let statement = self.parse_statement();
         self.parse_tok(Token::CloseCurlyBrace);
-        return Function(identifier, statement);
+        return ast_c::Function(identifier, statement);
     }
 
-    fn parse_identifier(&mut self) -> Identifier {
+    fn parse_identifier(&mut self) -> ast_c::Identifier {
         let res = match self.tokens.get(self.pos) {
             Some(cur_tok) => {
                 if let Token::Identifier(id_name) = cur_tok {
-                    Identifier(id_name.clone())
+                    ast_c::Identifier(id_name.clone())
                 } else {
                     panic!("Expected an identifier, but got {:?}", cur_tok);
                 }
@@ -58,16 +59,16 @@ impl MyParser {
         return res;
     }
 
-    fn parse_statement(&mut self) -> Statement {
+    fn parse_statement(&mut self) -> ast_c::Statement {
         self.parse_tok(Token::Return);
         let exp = self.parse_expression();
         self.parse_tok(Token::SemiColon);
-        return Statement::Return(exp);
+        return ast_c::Statement::Return(exp);
     }
 
-    fn parse_expression(&mut self) -> Expression {
+    fn parse_expression(&mut self) -> ast_c::Expression {
         let int_val = self.parse_int();
-        return Expression::Constant(int_val);
+        return ast_c::Expression::Constant(int_val);
     }
 
     fn parse_int(&mut self) -> i32 {
@@ -90,18 +91,18 @@ fn get_indentation(indent: usize) -> String {
     " ".repeat(4).repeat(indent)
 }
 
-pub fn pretty_printer(program: Program) {
+pub fn pretty_printer(program: ast_c::Program) {
     let indent = 0;
-    let Program(func) = program;
+    let ast_c::Program(func) = program;
 
     println!("Program(");
     pretty_print_function(func, indent + 1);
     println!(")")
 }
 
-fn pretty_print_function(func: Function, indent: usize) {
+fn pretty_print_function(func: ast_c::Function, indent: usize) {
     let indentation = get_indentation(indent);
-    let Function(identifier, statement) = func;
+    let ast_c::Function(identifier, statement) = func;
 
     println!("{}Function(", indentation);
     pretty_print_identifier(identifier, indent + 1);
@@ -109,17 +110,17 @@ fn pretty_print_function(func: Function, indent: usize) {
     println!("{})", indentation);
 }
 
-fn pretty_print_identifier(identifier: Identifier, indent: usize) {
+fn pretty_print_identifier(identifier: ast_c::Identifier, indent: usize) {
     let indentation = get_indentation(indent);
-    let Identifier(id_string) = identifier;
+    let ast_c::Identifier(id_string) = identifier;
     println!("{}name=\"{}\",", indentation, id_string);
 }
 
-fn pretty_print_statement(statement: Statement, indent: usize) {
+fn pretty_print_statement(statement: ast_c::Statement, indent: usize) {
     let indentation = get_indentation(indent);
 
     match statement {
-        Statement::Return(expression) => {
+        ast_c::Statement::Return(expression) => {
             println!("{}body=Return(", indentation);
             pretty_print_expression(expression, indent + 1);
             println!("{})", indentation);
@@ -127,10 +128,41 @@ fn pretty_print_statement(statement: Statement, indent: usize) {
     }
 }
 
-fn pretty_print_expression(expression: Expression, indent: usize) {
+fn pretty_print_expression(expression: ast_c::Expression, indent: usize) {
     let indentation = get_indentation(indent);
 
     match expression {
-        Expression::Constant(val) => println!("{}Constant({})", indentation, val),
+        ast_c::Expression::Constant(val) => println!("{}Constant({})", indentation, val),
     }
+}
+
+pub fn ast_to_ast_a(program: ast_c::Program) -> ast_a::Program {
+    let ast_c::Program(fnc) = program;
+    let assembly_fnc = func_to_ast_a(fnc);
+    return ast_a::Program(assembly_fnc);
+}
+
+fn func_to_ast_a(fnc: ast_c::Function) -> ast_a::Function {
+    let ast_c::Function(identifier, body) = fnc;
+    let ast_c::Identifier(name) = identifier;
+    let instructions = statement_to_ast_a(body);
+    let identifier_a = ast_a::Identifier(name);
+    return ast_a::Function(identifier_a, instructions);
+}
+
+fn statement_to_ast_a(body: ast_c::Statement) -> Vec<ast_a::Instruction> {
+    let mut instructions = Vec::new();
+    match body {
+        ast_c::Statement::Return(exp) => match exp {
+            ast_c::Expression::Constant(val) => {
+                instructions.push(ast_a::Instruction::Mov(
+                    ast_a::Operand::Imm(val),
+                    ast_a::Operand::Register,
+                ));
+                instructions.push(ast_a::Instruction::Ret);
+            }
+        },
+    }
+
+    return instructions;
 }
