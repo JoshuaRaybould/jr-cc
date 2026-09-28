@@ -53,15 +53,16 @@ fn main() {
 
     let mut parser = MyParser { tokens, pos: 0 };
 
-    let parsed;
-    let ast_assembly;
-    if mode > Modes::Lex {
-        parsed = parser.parse(); // Parse - parse but no generation.
-        pretty_printer(parsed);
-    } else if mode > Modes::Parse {
-        parsed = parser.parse();
-        ast_assembly = parser::ast_to_ast_a(parsed); // Codegen - assembly generation.
-    } else if mode > Modes::Codegen {
-        todo!(); // emit code.
+    match mode {
+        Modes::Lex => {}
+        Modes::Parse => {
+            let parsed = parser.parse();
+            pretty_printer(parsed);
+        }
+        Modes::Codegen => {
+            let parsed = parser.parse();
+            let ast_assembly = parser::ast_to_ast_a(parsed);
+        }
+        Modes::Full => {}
     }
 }
