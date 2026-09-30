@@ -1,11 +1,13 @@
 use clap::Parser;
 use std::fs;
 
+use crate::emit::emit_code;
 use crate::lexer::do_lexing;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer;
 
 mod asts;
+mod emit;
 mod lexer;
 mod parser;
 
@@ -46,8 +48,11 @@ fn main() {
         mode = Modes::Full;
     }
 
-    let f_name = args.fname;
-    let contents = fs::read_to_string(f_name).expect("Problem reading file!");
+    let fname = args.fname;
+    let mut out_fname = fname.clone();
+    out_fname.truncate(out_fname.len() - 1);
+    out_fname = format!("{}s", out_fname);
+    let contents = fs::read_to_string(fname).expect("Problem reading file!");
 
     let tokens = do_lexing(&contents); // lexing.
 
@@ -63,6 +68,10 @@ fn main() {
             let parsed = parser.parse();
             let ast_assembly = parser::ast_to_ast_a(parsed);
         }
-        Modes::Full => {}
+        Modes::Full => {
+            let parsed = parser.parse();
+            let ast_assembly = parser::ast_to_ast_a(parsed);
+            emit_code(ast_assembly, out_fname);
+        }
     }
 }

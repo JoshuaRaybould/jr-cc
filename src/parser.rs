@@ -137,13 +137,13 @@ fn pretty_print_expression(expression: ast_c::Expression, indent: usize) {
 }
 
 pub fn ast_to_ast_a(program: ast_c::Program) -> ast_a::Program {
-    let ast_c::Program(fnc) = program;
-    let assembly_fnc = func_to_ast_a(fnc);
-    return ast_a::Program(assembly_fnc);
+    let ast_c::Program(func) = program;
+    let assembly_func = func_to_ast_a(func);
+    return ast_a::Program(assembly_func);
 }
 
-fn func_to_ast_a(fnc: ast_c::Function) -> ast_a::Function {
-    let ast_c::Function(identifier, body) = fnc;
+fn func_to_ast_a(func: ast_c::Function) -> ast_a::Function {
+    let ast_c::Function(identifier, body) = func;
     let ast_c::Identifier(name) = identifier;
     let instructions = statement_to_ast_a(body);
     let identifier_a = ast_a::Identifier(name);
