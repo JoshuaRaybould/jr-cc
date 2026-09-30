@@ -1,5 +1,8 @@
 use crate::asts::ast_a;
-use crate::asts::ast_c;
+use crate::asts::ast_c::{
+    Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
+    Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
+};
 use crate::lexer::Token;
 
 pub struct MyParser {
@@ -21,7 +24,7 @@ impl MyParser {
         }
     }
 
-    pub fn parse(&mut self) -> ast_c::Program {
+    pub fn parse(&mut self) -> CProgram {
         let func = self.parse_function();
         if self.pos < self.tokens.len() {
             panic!(
@@ -29,10 +32,10 @@ impl MyParser {
                 self.tokens.get(self.pos)
             );
         }
-        return ast_c::Program(func);
+        return CProgram(func);
     }
 
-    fn parse_function(&mut self) -> ast_c::Function {
+    fn parse_function(&mut self) -> CFunction {
         self.parse_tok(Token::Int);
         let identifier = self.parse_identifier();
         self.parse_tok(Token::OpenParen);
@@ -41,14 +44,14 @@ impl MyParser {
         self.parse_tok(Token::OpenCurlyBrace);
         let statement = self.parse_statement();
         self.parse_tok(Token::CloseCurlyBrace);
-        return ast_c::Function(identifier, statement);
+        return CFunction(identifier, statement);
     }
 
-    fn parse_identifier(&mut self) -> ast_c::Identifier {
+    fn parse_identifier(&mut self) -> CIdentifier {
         let res = match self.tokens.get(self.pos) {
             Some(cur_tok) => {
                 if let Token::Identifier(id_name) = cur_tok {
-                    ast_c::Identifier(id_name.clone())
+                    CIdentifier(id_name.clone())
                 } else {
                     panic!("Expected an identifier, but got {:?}", cur_tok);
                 }
@@ -59,14 +62,14 @@ impl MyParser {
         return res;
     }
 
-    fn parse_statement(&mut self) -> ast_c::Statement {
+    fn parse_statement(&mut self) -> CStatement {
         self.parse_tok(Token::Return);
         let exp = self.parse_expression();
         self.parse_tok(Token::SemiColon);
-        return ast_c::Statement::Return(exp);
+        return CStatement::Return(exp);
     }
 
-    fn parse_expression(&mut self) -> ast_c::Expression {
+    fn parse_expression(&mut self) -> CExpression {
         let first_tok = self
             .tokens
             .get(self.pos)
@@ -81,19 +84,16 @@ impl MyParser {
             }
             Token::Negate => {
                 self.parse_tok(Token::Negate);
-                ast_c::Expression::Unary(
-                    ast_c::UnaryOperator::Negate,
-                    Box::new(self.parse_expression()),
-                )
+                CExpression::Unary(CUnaryOperator::Negate, Box::new(self.parse_expression()))
             }
             Token::Complement => {
                 self.parse_tok(Token::Complement);
-                ast_c::Expression::Unary(
-                    ast_c::UnaryOperator::Complement,
+                CExpression::Unary(
+                    CUnaryOperator::Complement,
                     Box::new(self.parse_expression()),
                 )
             }
-            Token::Constant(_) => ast_c::Expression::Constant(self.parse_int()),
+            Token::Constant(_) => CExpression::Constant(self.parse_int()),
             _ => panic!("Malformed expression!"),
         };
 
@@ -120,18 +120,18 @@ fn get_indentation(indent: usize) -> String {
     " ".repeat(4).repeat(indent)
 }
 
-pub fn pretty_printer(program: ast_c::Program) {
+pub fn pretty_printer(program: CProgram) {
     let indent = 0;
-    let ast_c::Program(func) = program;
+    let CProgram(func) = program;
 
     println!("Program(");
     pretty_print_function(func, indent + 1);
     println!(")")
 }
 
-fn pretty_print_function(func: ast_c::Function, indent: usize) {
+fn pretty_print_function(func: CFunction, indent: usize) {
     let indentation = get_indentation(indent);
-    let ast_c::Function(identifier, statement) = func;
+    let CFunction(identifier, statement) = func;
 
     println!("{}Function(", indentation);
     pretty_print_identifier(identifier, indent + 1);
@@ -139,17 +139,17 @@ fn pretty_print_function(func: ast_c::Function, indent: usize) {
     println!("{})", indentation);
 }
 
-fn pretty_print_identifier(identifier: ast_c::Identifier, indent: usize) {
+fn pretty_print_identifier(identifier: CIdentifier, indent: usize) {
     let indentation = get_indentation(indent);
-    let ast_c::Identifier(id_string) = identifier;
+    let CIdentifier(id_string) = identifier;
     println!("{}name=\"{}\",", indentation, id_string);
 }
 
-fn pretty_print_statement(statement: ast_c::Statement, indent: usize) {
+fn pretty_print_statement(statement: CStatement, indent: usize) {
     let indentation = get_indentation(indent);
 
     match statement {
-        ast_c::Statement::Return(expression) => {
+        CStatement::Return(expression) => {
             println!("{}body=Return(", indentation);
             pretty_print_expression(expression, indent + 1);
             println!("{})", indentation);
@@ -157,28 +157,28 @@ fn pretty_print_statement(statement: ast_c::Statement, indent: usize) {
     }
 }
 
-fn pretty_print_expression(expression: ast_c::Expression, indent: usize) {
+fn pretty_print_expression(expression: CExpression, indent: usize) {
     let indentation = get_indentation(indent);
     let expr_str = get_expression_str(expression);
 
     println!("{}{}", indentation, expr_str);
 }
 
-fn get_expression_str(expression: ast_c::Expression) -> String {
+fn get_expression_str(expression: CExpression) -> String {
     match expression {
-        ast_c::Expression::Constant(val) => format!("constant({})", val),
-        ast_c::Expression::Unary(unary_operator, expression) => {
+        CExpression::Constant(val) => format!("constant({})", val),
+        CExpression::Unary(unary_operator, expression) => {
             let operator = get_unary_op(unary_operator);
             let expr_str = get_expression_str(*expression);
-            format!("{}{}", operator, expr_str)
+            format!("{}({})", operator, expr_str)
         }
     }
 }
 
-fn get_unary_op(operator: ast_c::UnaryOperator) -> String {
+fn get_unary_op(operator: CUnaryOperator) -> String {
     match operator {
-        ast_c::UnaryOperator::Complement => "~".to_string(),
-        ast_c::UnaryOperator::Negate => "-".to_string(),
+        CUnaryOperator::Complement => "~".to_string(),
+        CUnaryOperator::Negate => "-".to_string(),
     }
 }
 /*
