@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::fs;
 
-use crate::emit::emit_code;
+use crate::emit::CodeEmitter;
 use crate::lexer::do_lexing;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer;
@@ -66,12 +66,16 @@ fn main() {
         }
         Modes::Codegen => {
             let parsed = parser.parse();
-            let ast_assembly = parser::ast_to_ast_a(parsed);
+            let _ast_assembly = parser::ast_to_ast_a(parsed);
         }
         Modes::Full => {
             let parsed = parser.parse();
             let ast_assembly = parser::ast_to_ast_a(parsed);
-            emit_code(ast_assembly, out_fname);
+            let code_emitter = CodeEmitter {
+                program: ast_assembly,
+                fname: out_fname,
+            };
+            code_emitter.emit_code();
         }
     }
 }

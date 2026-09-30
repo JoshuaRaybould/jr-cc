@@ -12,6 +12,7 @@ parser.add_argument("filename")
 parser.add_argument("--lex", action="store_true")
 parser.add_argument("--parse", action="store_true")
 parser.add_argument("--codegen", action="store_true")
+parser.add_argument("-S", action="store_true")
 
 args = parser.parse_args()
 
@@ -39,8 +40,16 @@ elif args.parse:
 elif args.codegen:
     res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--codegen"])
     exit(res.returncode)
-subprocess.run(['rm', preprocess_name])
-"""
-executable_name = file_name[0:-2]
-subprocess.run(['gcc', assembly_name, '-o', executable_name])
-"""
+elif args.S:
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name])
+    exit(res.returncode)
+else:
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name])
+    if res.returncode != 0:
+        exit(res.returncode)
+
+    subprocess.run(['rm', preprocess_name])
+    executable_name = file_name[0:-2]
+    subprocess.run(['gcc', assembly_name, '-o', executable_name])
+    subprocess.run(['rm', assembly_name])
+
