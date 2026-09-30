@@ -12,12 +12,19 @@ pub mod ast_c {
     #[derive(Debug)]
     pub enum Expression {
         Constant(i32),
+        Unary(UnaryOperator, Box<Expression>),
     }
 
     #[derive(Debug)]
     pub enum Statement {
         Return(Expression),
         //If(Expression, Box<Statement>, Option<Box<Statement>>),
+    }
+
+    #[derive(Debug)]
+    pub enum UnaryOperator {
+        Complement,
+        Negate,
     }
 }
 

@@ -67,8 +67,37 @@ impl MyParser {
     }
 
     fn parse_expression(&mut self) -> ast_c::Expression {
-        let int_val = self.parse_int();
-        return ast_c::Expression::Constant(int_val);
+        let first_tok = self
+            .tokens
+            .get(self.pos)
+            .expect("Expected and expression but got nothing");
+
+        let exp = match first_tok {
+            Token::OpenParen => {
+                self.parse_tok(Token::OpenParen);
+                let inner_exp = self.parse_expression();
+                self.parse_tok(Token::CloseParen);
+                inner_exp
+            }
+            Token::Negate => {
+                self.parse_tok(Token::Negate);
+                ast_c::Expression::Unary(
+                    ast_c::UnaryOperator::Negate,
+                    Box::new(self.parse_expression()),
+                )
+            }
+            Token::Complement => {
+                self.parse_tok(Token::Complement);
+                ast_c::Expression::Unary(
+                    ast_c::UnaryOperator::Complement,
+                    Box::new(self.parse_expression()),
+                )
+            }
+            Token::Constant(_) => ast_c::Expression::Constant(self.parse_int()),
+            _ => panic!("Malformed expression!"),
+        };
+
+        return exp;
     }
 
     fn parse_int(&mut self) -> i32 {
@@ -130,12 +159,29 @@ fn pretty_print_statement(statement: ast_c::Statement, indent: usize) {
 
 fn pretty_print_expression(expression: ast_c::Expression, indent: usize) {
     let indentation = get_indentation(indent);
+    let expr_str = get_expression_str(expression);
 
+    println!("{}{}", indentation, expr_str);
+}
+
+fn get_expression_str(expression: ast_c::Expression) -> String {
     match expression {
-        ast_c::Expression::Constant(val) => println!("{}Constant({})", indentation, val),
+        ast_c::Expression::Constant(val) => format!("constant({})", val),
+        ast_c::Expression::Unary(unary_operator, expression) => {
+            let operator = get_unary_op(unary_operator);
+            let expr_str = get_expression_str(*expression);
+            format!("{}{}", operator, expr_str)
+        }
     }
 }
 
+fn get_unary_op(operator: ast_c::UnaryOperator) -> String {
+    match operator {
+        ast_c::UnaryOperator::Complement => "~".to_string(),
+        ast_c::UnaryOperator::Negate => "-".to_string(),
+    }
+}
+/*
 pub fn ast_to_ast_a(program: ast_c::Program) -> ast_a::Program {
     let ast_c::Program(func) = program;
     let assembly_func = func_to_ast_a(func);
@@ -166,3 +212,4 @@ fn statement_to_ast_a(body: ast_c::Statement) -> Vec<ast_a::Instruction> {
 
     return instructions;
 }
+    */

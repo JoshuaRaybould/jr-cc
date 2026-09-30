@@ -66,16 +66,17 @@ fn main() {
         }
         Modes::Codegen => {
             let parsed = parser.parse();
-            let _ast_assembly = parser::ast_to_ast_a(parsed);
+            //let _ast_assembly = parser::ast_to_ast_a(parsed);
         }
         Modes::Full => {
             let parsed = parser.parse();
-            let ast_assembly = parser::ast_to_ast_a(parsed);
-            let code_emitter = CodeEmitter {
-                program: ast_assembly,
-                fname: out_fname,
-            };
-            code_emitter.emit_code();
+            /*    let ast_assembly = parser::ast_to_ast_a(parsed);
+                let code_emitter = CodeEmitter {
+                    program: ast_assembly,
+                    fname: out_fname,
+                };
+                code_emitter.emit_code();
+            */
         }
     }
 }
