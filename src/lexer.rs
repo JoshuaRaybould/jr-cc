@@ -10,11 +10,14 @@ pub enum Token {
     OpenCurlyBrace,
     CloseCurlyBrace,
     SemiColon,
+    Tilde,
+    Minus,
+    Decrement,
 }
 
 pub fn do_lexing(args: &str) -> Vec<Token> {
     // Boundary characeters
-    let boundary_characters = [b'(', b')', b'{', b'}', b';', b' ', b'\n'];
+    let boundary_characters = [b'(', b')', b'{', b'}', b';', b'-', b'~', b' ', b'\n'];
 
     // Identifiers
     const INT_KEYWORD: &[u8] = "int".as_bytes();
@@ -40,6 +43,15 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
                     b'{' => Token::OpenCurlyBrace,
                     b'}' => Token::CloseCurlyBrace,
                     b';' => Token::SemiColon,
+                    b'~' => Token::Tilde,
+                    b'-' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'-' {
+                            l += 1;
+                            Token::Decrement
+                        } else {
+                            Token::Minus
+                        }
+                    }
                     _ => panic!("How"),
                 };
                 tokens.push(cur_token);
