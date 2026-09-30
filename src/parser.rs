@@ -1,9 +1,11 @@
-use crate::asts::ast_a;
-use crate::asts::ast_c::{
+pub mod ast;
+pub mod pretty_printer;
+
+use crate::lexer::Token;
+use crate::parser::ast::{
     Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
     Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
 };
-use crate::lexer::Token;
 
 pub struct MyParser {
     pub tokens: Vec<Token>,
@@ -115,101 +117,3 @@ impl MyParser {
         return *res;
     }
 }
-
-fn get_indentation(indent: usize) -> String {
-    " ".repeat(4).repeat(indent)
-}
-
-pub fn pretty_printer(program: CProgram) {
-    let indent = 0;
-    let CProgram(func) = program;
-
-    println!("Program(");
-    pretty_print_function(func, indent + 1);
-    println!(")")
-}
-
-fn pretty_print_function(func: CFunction, indent: usize) {
-    let indentation = get_indentation(indent);
-    let CFunction(identifier, statement) = func;
-
-    println!("{}Function(", indentation);
-    pretty_print_identifier(identifier, indent + 1);
-    pretty_print_statement(statement, indent + 1);
-    println!("{})", indentation);
-}
-
-fn pretty_print_identifier(identifier: CIdentifier, indent: usize) {
-    let indentation = get_indentation(indent);
-    let CIdentifier(id_string) = identifier;
-    println!("{}name=\"{}\",", indentation, id_string);
-}
-
-fn pretty_print_statement(statement: CStatement, indent: usize) {
-    let indentation = get_indentation(indent);
-
-    match statement {
-        CStatement::Return(expression) => {
-            println!("{}body=Return(", indentation);
-            pretty_print_expression(expression, indent + 1);
-            println!("{})", indentation);
-        }
-    }
-}
-
-fn pretty_print_expression(expression: CExpression, indent: usize) {
-    let indentation = get_indentation(indent);
-    let expr_str = get_expression_str(expression);
-
-    println!("{}{}", indentation, expr_str);
-}
-
-fn get_expression_str(expression: CExpression) -> String {
-    match expression {
-        CExpression::Constant(val) => format!("constant({})", val),
-        CExpression::Unary(unary_operator, expression) => {
-            let operator = get_unary_op(unary_operator);
-            let expr_str = get_expression_str(*expression);
-            format!("{}({})", operator, expr_str)
-        }
-    }
-}
-
-fn get_unary_op(operator: CUnaryOperator) -> String {
-    match operator {
-        CUnaryOperator::Complement => "~".to_string(),
-        CUnaryOperator::Negate => "-".to_string(),
-    }
-}
-/*
-pub fn ast_to_ast_a(program: ast_c::Program) -> ast_a::Program {
-    let ast_c::Program(func) = program;
-    let assembly_func = func_to_ast_a(func);
-    return ast_a::Program(assembly_func);
-}
-
-fn func_to_ast_a(func: ast_c::Function) -> ast_a::Function {
-    let ast_c::Function(identifier, body) = func;
-    let ast_c::Identifier(name) = identifier;
-    let instructions = statement_to_ast_a(body);
-    let identifier_a = ast_a::Identifier(name);
-    return ast_a::Function(identifier_a, instructions);
-}
-
-fn statement_to_ast_a(body: ast_c::Statement) -> Vec<ast_a::Instruction> {
-    let mut instructions = Vec::new();
-    match body {
-        ast_c::Statement::Return(exp) => match exp {
-            ast_c::Expression::Constant(val) => {
-                instructions.push(ast_a::Instruction::Mov(
-                    ast_a::Operand::Imm(val),
-                    ast_a::Operand::Register,
-                ));
-                instructions.push(ast_a::Instruction::Ret);
-            }
-        },
-    }
-
-    return instructions;
-}
-    */

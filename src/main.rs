@@ -4,12 +4,13 @@ use std::fs;
 use crate::emit::CodeEmitter;
 use crate::lexer::do_lexing;
 use crate::parser::MyParser;
-use crate::parser::pretty_printer;
+use crate::parser::pretty_printer::pretty_print;
 
-mod asts;
+mod assembly;
 mod emit;
 mod lexer;
 mod parser;
+mod tacky;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -62,7 +63,7 @@ fn main() {
         Modes::Lex => {}
         Modes::Parse => {
             let parsed = parser.parse();
-            pretty_printer(parsed);
+            pretty_print(parsed);
         }
         Modes::Codegen => {
             let parsed = parser.parse();
