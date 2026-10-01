@@ -9,7 +9,7 @@ use crate::parser::ast::{
     Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
 };
 
-pub fn ast_to_ast_a(program: CProgram) -> AProgram {
+pub fn ast_c_to_ast_a(program: CProgram) -> AProgram {
     let CProgram(func) = program;
     let assembly_func = func_to_ast_a(func);
     return AProgram(assembly_func);

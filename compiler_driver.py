@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("filename")
 parser.add_argument("--lex", action="store_true")
 parser.add_argument("--parse", action="store_true")
+parser.add_argument("--tacky", action="store_true")
 parser.add_argument("--codegen", action="store_true")
 parser.add_argument("-S", action="store_true")
 
@@ -36,6 +37,9 @@ if args.lex:
     exit(res.returncode)
 elif args.parse:
     res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--parse"])
+    exit(res.returncode)
+elif args.tacky:
+    res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--tacky"])
     exit(res.returncode)
 elif args.codegen:
     res = subprocess.run(["cargo", "run", "--", "--fname", preprocess_name, "--codegen"])

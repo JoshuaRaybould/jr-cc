@@ -5,6 +5,7 @@ use crate::emit::CodeEmitter;
 use crate::lexer::do_lexing;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer::pretty_print;
+use crate::tacky::TackyTree;
 
 mod assembly;
 mod emit;
@@ -21,6 +22,9 @@ struct Args {
     lex: bool,
 
     #[arg(short, long)]
+    tacky: bool,
+
+    #[arg(short, long)]
     parse: bool,
 
     #[arg(short, long)]
@@ -31,6 +35,7 @@ struct Args {
 enum Modes {
     Lex,
     Parse,
+    Tacky,
     Codegen,
     Full,
 }
@@ -41,6 +46,8 @@ fn main() {
     let mode;
     if args.codegen {
         mode = Modes::Codegen;
+    } else if args.tacky {
+        mode = Modes::Tacky
     } else if args.parse {
         mode = Modes::Parse;
     } else if args.lex {
@@ -55,15 +62,23 @@ fn main() {
     out_fname = format!("{}s", out_fname);
     let contents = fs::read_to_string(fname).expect("Problem reading file!");
 
-    let tokens = do_lexing(&contents); // lexing.
+    let tokens = do_lexing(&contents); // Lexing is done here!!!
 
     let mut parser = MyParser { tokens, pos: 0 };
 
     match mode {
-        Modes::Lex => {}
+        Modes::Lex => {} // Lexing it done by default above since all modes need it!!!
         Modes::Parse => {
             let parsed = parser.parse();
             pretty_print(parsed);
+        }
+        Modes::Tacky => {
+            let parsed = parser.parse();
+            let mut tacky = TackyTree {
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            println!("{:?}", tacky_prog);
         }
         Modes::Codegen => {
             let parsed = parser.parse();
@@ -71,7 +86,7 @@ fn main() {
         }
         Modes::Full => {
             let parsed = parser.parse();
-            /*    let ast_assembly = parser::ast_to_ast_a(parsed);
+            /*    let ast_assembly = parser::ast_c_to_ast_a(parsed);
                 let code_emitter = CodeEmitter {
                     program: ast_assembly,
                     fname: out_fname,

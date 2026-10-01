@@ -10,7 +10,7 @@ pub enum Instruction {
     Unary(UnaryOperator, Value, Value),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Constant(i32),
     Var(String),
