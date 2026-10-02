@@ -8,6 +8,7 @@ pub struct Function(pub String, pub Vec<Instruction>);
 pub enum Instruction {
     Return(Value),
     Unary(UnaryOperator, Value, Value),
+    Binary(BinaryOperator, Value, Value, Value),
 }
 
 #[derive(Debug, Clone)]
@@ -20,4 +21,13 @@ pub enum Value {
 pub enum UnaryOperator {
     Complement,
     Negate,
+}
+
+#[derive(Debug)]
+pub enum BinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
 }
