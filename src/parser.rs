@@ -2,7 +2,6 @@ pub mod ast;
 pub mod pretty_printer;
 
 use crate::lexer::Token;
-use crate::parser::ast::Expression::Binary;
 use crate::parser::ast::{
     BinaryOperator as CBinaryOperator, Expression as CExpression, Function as CFunction,
     Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
@@ -114,7 +113,7 @@ impl MyParser {
         let first_tok = self
             .tokens
             .get(self.pos)
-            .expect("Expected and expression but got nothing");
+            .expect("Expected an expression but got nothing");
 
         let exp = match first_tok {
             Token::OpenParen => {
@@ -134,7 +133,7 @@ impl MyParser {
                 CExpression::Unary(CUnaryOperator::Complement, Box::new(inner_exp))
             }
             Token::Constant(_) => CExpression::Constant(self.parse_int()),
-            x => panic!("Malformed expression! got {:?}", x),
+            x => panic!("Malformed expression! Got {:?}", x),
         };
 
         return exp;

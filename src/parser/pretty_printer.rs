@@ -64,7 +64,7 @@ fn get_expression_str(expression: CExpression) -> String {
             let operator = get_binary_op(binary_operator);
             let expr_str = get_expression_str(*expression);
             let expr_str1 = get_expression_str(*expression1);
-            format!("{} {} {}", expr_str, operator, expr_str1)
+            format!("{}({}, {})", operator, expr_str, expr_str1)
         }
     }
 }
@@ -78,10 +78,10 @@ fn get_unary_op(operator: CUnaryOperator) -> String {
 
 fn get_binary_op(operator: CBinaryOperator) -> String {
     match operator {
-        CBinaryOperator::Add => "+".to_string(),
-        CBinaryOperator::Subtract => "-".to_string(),
-        CBinaryOperator::Multiply => "*".to_string(),
-        CBinaryOperator::Divide => "/".to_string(),
-        CBinaryOperator::Remainder => "%".to_string(),
+        CBinaryOperator::Add => "Add".to_string(),
+        CBinaryOperator::Subtract => "Subtract".to_string(),
+        CBinaryOperator::Multiply => "Multiply".to_string(),
+        CBinaryOperator::Divide => "Divide".to_string(),
+        CBinaryOperator::Remainder => "Remainder".to_string(),
     }
 }
