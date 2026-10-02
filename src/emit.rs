@@ -6,7 +6,7 @@ pub struct CodeEmitter {
     pub program: Program,
     pub fname: String,
 }
-
+/*
 impl CodeEmitter {
     fn write_to_file(&self, text: String) {
         let mut file = File::options()
@@ -65,3 +65,4 @@ impl CodeEmitter {
         }
     }
 }
+*/

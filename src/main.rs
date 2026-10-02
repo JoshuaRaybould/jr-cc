@@ -82,7 +82,12 @@ fn main() {
         }
         Modes::Codegen => {
             let parsed = parser.parse();
-            //let _ast_assembly = parser::ast_to_ast_a(parsed);
+            let mut tacky = TackyTree {
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
+            println!("{:?}", ast_assembly);
         }
         Modes::Full => {
             let parsed = parser.parse();
