@@ -13,11 +13,17 @@ pub enum Token {
     Complement,
     Negate,
     Decrement,
+    Add,
+    Multiply,
+    Divide,
+    Remainder,
 }
 
 pub fn do_lexing(args: &str) -> Vec<Token> {
     // Boundary characeters
-    let boundary_characters = [b'(', b')', b'{', b'}', b';', b'-', b'~', b' ', b'\n'];
+    let boundary_characters = [
+        b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b' ', b'\n',
+    ];
 
     // Identifiers
     const INT_KEYWORD: &[u8] = "int".as_bytes();
@@ -52,6 +58,10 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
                             Token::Negate
                         }
                     }
+                    b'+' => Token::Add,
+                    b'/' => Token::Divide,
+                    b'*' => Token::Multiply,
+                    b'%' => Token::Remainder,
                     _ => panic!("How"),
                 };
                 tokens.push(cur_token);
