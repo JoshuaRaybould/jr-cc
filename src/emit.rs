@@ -6,7 +6,7 @@ pub struct CodeEmitter {
     pub program: Program,
     pub fname: String,
 }
-/*
+
 impl CodeEmitter {
     fn write_to_file(&self, text: String) {
         let mut file = File::options()
@@ -37,10 +37,16 @@ impl CodeEmitter {
         let assem_func = format!("\t.global {}", func_name);
         self.write_to_file(assem_func);
         self.write_to_file(format!("{}:", func_name));
+        self.write_to_file("\tpushq %rbp".to_string());
+        self.write_to_file("\tmovq %rsp, %rbp".to_string());
         for instruction in instructions {
             match instruction {
                 Instruction::Mov(src, dst) => self.emit_mov(src, dst),
                 Instruction::Ret => self.emit_ret(),
+                Instruction::Unary(unary_operator, operand) => {
+                    self.emit_unary(unary_operator, operand);
+                }
+                Instruction::AllocateStack(offset) => self.emit_aloc(offset),
             }
         }
     }
@@ -54,15 +60,36 @@ impl CodeEmitter {
     }
 
     fn emit_ret(&self) {
+        self.write_to_file("\tmovq %rbp, %rsp".to_string());
+        self.write_to_file("\tpopq %rbp".to_string());
         self.write_to_file("\tret".to_string());
     }
 
     // Get operand string
     fn get_operand_str(&self, op: &Operand) -> String {
         match op {
-            Operand::Imm(addr) => format!("${}", addr.to_string()),
-            Operand::Register => "%eax".to_string(),
+            Operand::Imm(c) => format!("${c}"),
+            Operand::Reg(register) => match register {
+                Register::AX => "%eax".to_string(),
+                Register::R10 => "%r10d".to_string(),
+            },
+            Operand::Stack(val) => format!("{val}(%rbp)"),
+            Operand::Pseudo(_) => panic!("Psudeoregister made it into the assembly representation"),
         }
     }
+
+    fn emit_unary(&self, unary: &UnaryOperator, operand: &Operand) {
+        let operator = match unary {
+            UnaryOperator::Negate => "negl".to_string(),
+            UnaryOperator::Complement => "notl".to_string(),
+        };
+        let op = self.get_operand_str(&operand);
+        let s = format!("\t{} {}", operator, op);
+        self.write_to_file(s);
+    }
+
+    fn emit_aloc(&self, offset: &i32) {
+        let s = format!("\tsubq ${}, %rsp", offset);
+        self.write_to_file(s);
+    }
 }
-*/

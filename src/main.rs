@@ -91,13 +91,16 @@ fn main() {
         }
         Modes::Full => {
             let parsed = parser.parse();
-            /*    let ast_assembly = parser::ast_c_to_ast_a(parsed);
-                let code_emitter = CodeEmitter {
-                    program: ast_assembly,
-                    fname: out_fname,
-                };
-                code_emitter.emit_code();
-            */
+            let mut tacky = TackyTree {
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
+            let code_emitter = CodeEmitter {
+                program: ast_assembly,
+                fname: out_fname,
+            };
+            code_emitter.emit_code();
         }
     }
 }
