@@ -2,9 +2,11 @@ pub mod ast;
 pub mod pretty_printer;
 
 use crate::lexer::Token;
+use crate::parser::ast::Expression::Binary;
 use crate::parser::ast::{
-    Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
-    Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
+    BinaryOperator as CBinaryOperator, Expression as CExpression, Function as CFunction,
+    Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
+    UnaryOperator as CUnaryOperator,
 };
 
 pub struct MyParser {
@@ -66,12 +68,49 @@ impl MyParser {
 
     fn parse_statement(&mut self) -> CStatement {
         self.parse_tok(Token::Return);
-        let exp = self.parse_expression();
+        let exp = self.parse_expression(0);
         self.parse_tok(Token::SemiColon);
         return CStatement::Return(exp);
     }
 
-    fn parse_expression(&mut self) -> CExpression {
+    fn parse_expression(&mut self, min_prec: i32) -> CExpression {
+        let mut left = self.parse_factor();
+        let mut next_tok = self
+            .tokens
+            .get(self.pos)
+            .expect("Program ended with an expression");
+
+        let binary_operators = [
+            Token::Add,
+            Token::Negate,
+            Token::Divide,
+            Token::Multiply,
+            Token::Remainder,
+        ];
+
+        while binary_operators.contains(next_tok) && next_tok.get_precedence() >= min_prec {
+            let op = match next_tok {
+                Token::Add => CBinaryOperator::Add,
+                Token::Negate => CBinaryOperator::Subtract,
+                Token::Divide => CBinaryOperator::Divide,
+                Token::Multiply => CBinaryOperator::Multiply,
+                Token::Remainder => CBinaryOperator::Remainder,
+                _ => panic!("Impossible!"),
+            };
+            let precedence = next_tok.get_precedence();
+            self.parse_tok(next_tok.clone());
+            let right = self.parse_expression(precedence + 1);
+            left = CExpression::Binary(op, Box::new(left), Box::new(right));
+            next_tok = self
+                .tokens
+                .get(self.pos)
+                .expect("Program ended with an expression");
+        }
+
+        return left;
+    }
+
+    fn parse_factor(&mut self) -> CExpression {
         let first_tok = self
             .tokens
             .get(self.pos)
@@ -80,23 +119,22 @@ impl MyParser {
         let exp = match first_tok {
             Token::OpenParen => {
                 self.parse_tok(Token::OpenParen);
-                let inner_exp = self.parse_expression();
+                let inner_exp = self.parse_expression(0);
                 self.parse_tok(Token::CloseParen);
                 inner_exp
             }
             Token::Negate => {
                 self.parse_tok(Token::Negate);
-                CExpression::Unary(CUnaryOperator::Negate, Box::new(self.parse_expression()))
+                let inner_exp = self.parse_factor();
+                CExpression::Unary(CUnaryOperator::Negate, Box::new(inner_exp))
             }
             Token::Complement => {
                 self.parse_tok(Token::Complement);
-                CExpression::Unary(
-                    CUnaryOperator::Complement,
-                    Box::new(self.parse_expression()),
-                )
+                let inner_exp = self.parse_factor();
+                CExpression::Unary(CUnaryOperator::Complement, Box::new(inner_exp))
             }
             Token::Constant(_) => CExpression::Constant(self.parse_int()),
-            _ => panic!("Malformed expression!"),
+            x => panic!("Malformed expression! got {:?}", x),
         };
 
         return exp;

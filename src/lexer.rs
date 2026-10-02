@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token {
     Identifier(String),
     Constant(i32),
@@ -17,6 +17,21 @@ pub enum Token {
     Multiply,
     Divide,
     Remainder,
+}
+
+impl Token {
+    pub fn get_precedence(&self) -> i32 {
+        const BIN_PLUS_MINUS: i32 = 50;
+        const BIN_MULT_DIV: i32 = 60;
+        match self {
+            Token::Negate => BIN_PLUS_MINUS,
+            Token::Add => BIN_PLUS_MINUS,
+            Token::Multiply => BIN_MULT_DIV,
+            Token::Divide => BIN_MULT_DIV,
+            Token::Remainder => BIN_MULT_DIV,
+            _ => panic!("Incorrect usage"),
+        }
+    }
 }
 
 pub fn do_lexing(args: &str) -> Vec<Token> {

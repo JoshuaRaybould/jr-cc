@@ -64,6 +64,7 @@ impl TackyTree {
                 self.tmp_var += 1;
                 return var;
             }
+            CExpression::Binary(binary_operator, expression, expression1) => todo!(),
         }
     }
 }

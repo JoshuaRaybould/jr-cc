@@ -12,6 +12,7 @@ pub struct Identifier(pub String);
 pub enum Expression {
     Constant(i32),
     Unary(UnaryOperator, Box<Expression>),
+    Binary(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug)]
@@ -24,4 +25,13 @@ pub enum Statement {
 pub enum UnaryOperator {
     Complement,
     Negate,
+}
+
+#[derive(Debug)]
+pub enum BinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
 }
