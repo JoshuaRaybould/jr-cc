@@ -54,7 +54,7 @@ fn pretty_print_expression(expression: CExpression, indent: usize) {
 
 fn get_expression_str(expression: CExpression) -> String {
     match expression {
-        CExpression::Constant(val) => format!("constant({})", val),
+        CExpression::Constant(val) => format!("Constant({})", val),
         CExpression::Unary(unary_operator, expression) => {
             let operator = get_unary_op(unary_operator);
             let expr_str = get_expression_str(*expression);
@@ -83,5 +83,10 @@ fn get_binary_op(operator: CBinaryOperator) -> String {
         CBinaryOperator::Multiply => "Multiply".to_string(),
         CBinaryOperator::Divide => "Divide".to_string(),
         CBinaryOperator::Remainder => "Remainder".to_string(),
+        CBinaryOperator::BitAnd => "BitAnd".to_string(),
+        CBinaryOperator::BitOr => "BitOr".to_string(),
+        CBinaryOperator::Xor => "Xor".to_string(),
+        CBinaryOperator::LeftShift => "LShift".to_string(),
+        CBinaryOperator::RightShift => "RShift".to_string(),
     }
 }

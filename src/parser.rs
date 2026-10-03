@@ -85,6 +85,11 @@ impl MyParser {
             Token::Divide,
             Token::Multiply,
             Token::Remainder,
+            Token::BitAnd,
+            Token::BitOr,
+            Token::Xor,
+            Token::LeftShift,
+            Token::RightShift,
         ];
 
         while binary_operators.contains(next_tok) && next_tok.get_precedence() >= min_prec {
@@ -94,6 +99,11 @@ impl MyParser {
                 Token::Divide => CBinaryOperator::Divide,
                 Token::Multiply => CBinaryOperator::Multiply,
                 Token::Remainder => CBinaryOperator::Remainder,
+                Token::BitAnd => CBinaryOperator::BitAnd,
+                Token::BitOr => CBinaryOperator::BitOr,
+                Token::Xor => CBinaryOperator::Xor,
+                Token::LeftShift => CBinaryOperator::LeftShift,
+                Token::RightShift => CBinaryOperator::RightShift,
                 _ => panic!("Impossible!"),
             };
             let precedence = next_tok.get_precedence();

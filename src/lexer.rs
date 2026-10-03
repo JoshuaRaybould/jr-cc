@@ -17,18 +17,36 @@ pub enum Token {
     Multiply,
     Divide,
     Remainder,
+    BitAnd,
+    BitOr,
+    Xor,
+    LeftShift,
+    RightShift,
+    And,
+    Or,
+    GreaterThan,
+    LessThan,
 }
 
 impl Token {
     pub fn get_precedence(&self) -> i32 {
         const BIN_PLUS_MINUS: i32 = 50;
         const BIN_MULT_DIV: i32 = 60;
+        const BIT_SHIFT: i32 = 45;
+        const BIT_AND: i32 = 36;
+        const BIT_XOR: i32 = 35;
+        const BIT_OR: i32 = 34;
         match self {
             Token::Negate => BIN_PLUS_MINUS,
             Token::Add => BIN_PLUS_MINUS,
             Token::Multiply => BIN_MULT_DIV,
             Token::Divide => BIN_MULT_DIV,
+            Token::LeftShift => BIT_SHIFT,
+            Token::RightShift => BIT_SHIFT,
             Token::Remainder => BIN_MULT_DIV,
+            Token::BitAnd => BIT_AND,
+            Token::Xor => BIT_XOR,
+            Token::BitOr => BIT_OR,
             _ => panic!("Incorrect usage"),
         }
     }
@@ -37,7 +55,8 @@ impl Token {
 pub fn do_lexing(args: &str) -> Vec<Token> {
     // Boundary characeters
     let boundary_characters = [
-        b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b' ', b'\n',
+        b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b'&', b'|', b'^', b'<',
+        b'>', b' ', b'\n',
     ];
 
     // Identifiers
@@ -77,6 +96,39 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
                     b'/' => Token::Divide,
                     b'*' => Token::Multiply,
                     b'%' => Token::Remainder,
+                    b'&' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'&' {
+                            l += 1;
+                            Token::And
+                        } else {
+                            Token::BitAnd
+                        }
+                    }
+                    b'|' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'|' {
+                            l += 1;
+                            Token::Or
+                        } else {
+                            Token::BitOr
+                        }
+                    }
+                    b'^' => Token::Xor,
+                    b'<' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'<' {
+                            l += 1;
+                            Token::LeftShift
+                        } else {
+                            Token::LessThan
+                        }
+                    }
+                    b'>' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'>' {
+                            l += 1;
+                            Token::RightShift
+                        } else {
+                            Token::GreaterThan
+                        }
+                    }
                     _ => panic!("How"),
                 };
                 tokens.push(cur_token);

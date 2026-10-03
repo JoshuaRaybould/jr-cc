@@ -34,4 +34,9 @@ pub enum BinaryOperator {
     Multiply,
     Divide,
     Remainder,
+    BitAnd,
+    BitOr,
+    Xor,
+    LeftShift,
+    RightShift,
 }
