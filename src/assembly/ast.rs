@@ -12,6 +12,9 @@ pub struct Identifier(pub String);
 pub enum Instruction {
     Mov(Operand, Operand),
     Unary(UnaryOperator, Operand),
+    Binary(BinaryOperator, Operand, Operand),
+    Idiv(Operand),
+    Cdq,
     AllocateStack(i32),
     Ret,
 }
@@ -33,5 +36,14 @@ pub enum Operand {
 #[derive(Debug, Clone)]
 pub enum Register {
     AX,
+    DX,
     R10,
+    R11,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum BinaryOperator {
+    Add,
+    Sub,
+    Mult,
 }

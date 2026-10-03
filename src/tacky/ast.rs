@@ -23,7 +23,7 @@ pub enum UnaryOperator {
     Negate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
     Add,
     Subtract,
