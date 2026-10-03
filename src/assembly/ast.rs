@@ -39,6 +39,8 @@ pub enum Register {
     DX,
     R10,
     R11,
+    CL,  // 8 bit counter register
+    ECX, // 32 bit counter register (same as above)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -46,4 +48,9 @@ pub enum BinaryOperator {
     Add,
     Sub,
     Mult,
+    And,
+    Xor,
+    Or,
+    Sal,
+    Sar,
 }

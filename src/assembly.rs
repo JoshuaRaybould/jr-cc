@@ -79,6 +79,18 @@ fn statement_to_ast_a(instructions: Vec<TInstruction>) -> Vec<AInstruction> {
     return a_instructions;
 }
 
+const SIMPLE_BIN: [TBinaryOperator; 8] = [
+    // These get turned into instructions with a mov then the binary operation.
+    TBinaryOperator::Add,
+    TBinaryOperator::Subtract,
+    TBinaryOperator::Multiply,
+    TBinaryOperator::Xor,
+    TBinaryOperator::BitOr,
+    TBinaryOperator::BitAnd,
+    TBinaryOperator::LeftShift,
+    TBinaryOperator::RightShift,
+];
+
 fn add_binary_instructions(
     a_instructions: &mut Vec<AInstruction>,
     b_op: &TBinaryOperator,
@@ -86,13 +98,8 @@ fn add_binary_instructions(
     src2: AOperand,
     dst: AOperand,
 ) {
-    let add_sub_mult = [
-        TBinaryOperator::Add,
-        TBinaryOperator::Subtract,
-        TBinaryOperator::Multiply,
-    ];
     let div_rem = [TBinaryOperator::Divide, TBinaryOperator::Remainder];
-    if add_sub_mult.contains(b_op) {
+    if SIMPLE_BIN.contains(b_op) {
         let op = binary_op_to_ast_a(b_op);
         let instr1 = AInstruction::Mov(src1, dst.clone());
         let instr2 = AInstruction::Binary(op, src2, dst);
@@ -133,7 +140,12 @@ fn binary_op_to_ast_a(binary_op: &TBinaryOperator) -> ABinaryOperator {
         TBinaryOperator::Add => ABinaryOperator::Add,
         TBinaryOperator::Subtract => ABinaryOperator::Sub,
         TBinaryOperator::Multiply => ABinaryOperator::Mult,
-        _ => panic!("Called binary operator conversion on wrong operator"),
+        TBinaryOperator::BitAnd => ABinaryOperator::And,
+        TBinaryOperator::BitOr => ABinaryOperator::Or,
+        TBinaryOperator::Xor => ABinaryOperator::Xor,
+        TBinaryOperator::LeftShift => ABinaryOperator::Sal,
+        TBinaryOperator::RightShift => ABinaryOperator::Sar,
+        _ => panic!(""),
     }
 }
 
@@ -254,6 +266,14 @@ fn fix_mov_instr(
     }
 }
 
+const SIMPLE_FIX_BIN: [ABinaryOperator; 5] = [
+    ABinaryOperator::Add,
+    ABinaryOperator::Sub,
+    ABinaryOperator::And,
+    ABinaryOperator::Or,
+    ABinaryOperator::Xor,
+];
+
 fn fix_bin_instr(
     fixed_instrs: &mut Vec<AInstruction>,
     instruction: &AInstruction,
@@ -261,14 +281,16 @@ fn fix_bin_instr(
     src: &AOperand,
     dst: &AOperand,
 ) {
-    match b_op {
-        ABinaryOperator::Add => fix_add_sub(fixed_instrs, instruction, b_op, src, dst),
-        ABinaryOperator::Sub => fix_add_sub(fixed_instrs, instruction, b_op, src, dst),
-        ABinaryOperator::Mult => fix_mult(fixed_instrs, instruction, src, dst),
+    if SIMPLE_FIX_BIN.contains(b_op) {
+        fix_simple_binary(fixed_instrs, instruction, b_op, src, dst);
+    } else if *b_op == ABinaryOperator::Mult {
+        fix_mult(fixed_instrs, instruction, src, dst);
+    } else if *b_op == ABinaryOperator::Sal || *b_op == ABinaryOperator::Sar {
+        fix_shift(fixed_instrs, instruction, b_op, src, dst);
     }
 }
 
-fn fix_add_sub(
+fn fix_simple_binary(
     fixed_instrs: &mut Vec<AInstruction>,
     instruction: &AInstruction,
     b_op: &ABinaryOperator,
@@ -280,7 +302,7 @@ fn fix_add_sub(
             AOperand::Stack(_) => {
                 let instr1 = AInstruction::Mov(src.clone(), AOperand::Reg(ARegister::R10));
                 fixed_instrs.push(instr1);
-                if *b_op == ABinaryOperator::Add || *b_op == ABinaryOperator::Sub {
+                if SIMPLE_FIX_BIN.contains(b_op) {
                     let instr2 = AInstruction::Binary(
                         b_op.clone(),
                         AOperand::Reg(ARegister::R10),
@@ -288,7 +310,10 @@ fn fix_add_sub(
                     );
                     fixed_instrs.push(instr2);
                 } else {
-                    panic!("Expected Add of Sub but got {:?}", b_op);
+                    panic!(
+                        "Expected Add, Sub, BitOr, BitAnd, Xor, LeftShift or RightShift but got {:?}",
+                        b_op
+                    );
                 }
             }
             _ => fixed_instrs.push(instruction.clone()),
@@ -315,6 +340,29 @@ fn fix_mult(
             fixed_instrs.push(instr1);
             fixed_instrs.push(instr2);
             fixed_instrs.push(instr3);
+        }
+        _ => fixed_instrs.push(instruction.clone()),
+    }
+}
+
+fn fix_shift(
+    fixed_instrs: &mut Vec<AInstruction>,
+    instruction: &AInstruction,
+    b_op: &ABinaryOperator,
+    src: &AOperand,
+    dst: &AOperand,
+) {
+    match src {
+        AOperand::Stack(_) => {
+            let instr1 = AInstruction::Mov(src.clone(), AOperand::Reg(ARegister::ECX));
+            fixed_instrs.push(instr1);
+            if ABinaryOperator::Sal == *b_op || ABinaryOperator::Sar == *b_op {
+                let instr2 =
+                    AInstruction::Binary(b_op.clone(), AOperand::Reg(ARegister::CL), dst.clone());
+                fixed_instrs.push(instr2);
+            } else {
+                panic!("Expected LeftShift or RightShift but got {:?}", b_op);
+            }
         }
         _ => fixed_instrs.push(instruction.clone()),
     }

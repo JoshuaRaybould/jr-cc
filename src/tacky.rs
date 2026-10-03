@@ -94,11 +94,11 @@ impl TackyTree {
             CBinaryOperator::Multiply => TBinaryOperator::Multiply,
             CBinaryOperator::Divide => TBinaryOperator::Divide,
             CBinaryOperator::Remainder => TBinaryOperator::Remainder,
-            CBinaryOperator::BitAnd => todo!(),
-            CBinaryOperator::BitOr => todo!(),
-            CBinaryOperator::Xor => todo!(),
-            CBinaryOperator::LeftShift => todo!(),
-            CBinaryOperator::RightShift => todo!(),
+            CBinaryOperator::BitAnd => TBinaryOperator::BitAnd,
+            CBinaryOperator::BitOr => TBinaryOperator::BitOr,
+            CBinaryOperator::Xor => TBinaryOperator::Xor,
+            CBinaryOperator::LeftShift => TBinaryOperator::LeftShift,
+            CBinaryOperator::RightShift => TBinaryOperator::RightShift,
         }
     }
 }

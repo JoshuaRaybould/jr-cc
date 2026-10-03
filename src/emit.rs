@@ -79,6 +79,8 @@ impl CodeEmitter {
                 Register::R10 => "%r10d".to_string(),
                 Register::DX => "%edx".to_string(),
                 Register::R11 => "%r11d".to_string(),
+                Register::CL => "%cl".to_string(),
+                Register::ECX => "%ecx".to_string(),
             },
             Operand::Stack(val) => format!("{val}(%rbp)"),
             Operand::Pseudo(_) => panic!("Psudeoregister made it into the assembly representation"),
@@ -100,6 +102,11 @@ impl CodeEmitter {
             BinaryOperator::Add => "addl".to_string(),
             BinaryOperator::Sub => "subl".to_string(),
             BinaryOperator::Mult => "imull".to_string(),
+            BinaryOperator::And => "andl".to_string(),
+            BinaryOperator::Xor => "xorl".to_string(),
+            BinaryOperator::Or => "orl".to_string(),
+            BinaryOperator::Sal => "sall".to_string(),
+            BinaryOperator::Sar => "sarl".to_string(),
         };
         let op1 = self.get_operand_str(src);
         let op2 = self.get_operand_str(dst);
