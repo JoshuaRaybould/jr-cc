@@ -24,29 +24,51 @@ pub enum Token {
     RightShift,
     And,
     Or,
-    GreaterThan,
-    LessThan,
+    Not,
+    Equal,
+    Assign,
+    Neq,
+    Le,
+    Leq,
+    Ge,
+    Geq,
 }
 
 impl Token {
     pub fn get_precedence(&self) -> i32 {
-        const BIN_PLUS_MINUS: i32 = 50;
+        const SECOND_HIGHEST: i32 = 70;
         const BIN_MULT_DIV: i32 = 60;
+        const BIN_PLUS_MINUS: i32 = 50;
         const BIT_SHIFT: i32 = 45;
+        const COMPARING: i32 = 42;
+        const EQUIVALENCE: i32 = 40;
         const BIT_AND: i32 = 36;
         const BIT_XOR: i32 = 35;
         const BIT_OR: i32 = 34;
+        const LOGIC_AND: i32 = 30;
+        const LOGIC_OR: i32 = 28;
+        const ASSIGNMENT: i32 = 20;
         match self {
-            Token::Negate => BIN_PLUS_MINUS,
-            Token::Add => BIN_PLUS_MINUS,
+            Token::Not => SECOND_HIGHEST,
+            Token::Remainder => BIN_MULT_DIV,
             Token::Multiply => BIN_MULT_DIV,
             Token::Divide => BIN_MULT_DIV,
+            Token::Negate => BIN_PLUS_MINUS,
+            Token::Add => BIN_PLUS_MINUS,
             Token::LeftShift => BIT_SHIFT,
             Token::RightShift => BIT_SHIFT,
-            Token::Remainder => BIN_MULT_DIV,
+            Token::Ge => COMPARING,
+            Token::Geq => COMPARING,
+            Token::Le => COMPARING,
+            Token::Leq => COMPARING,
+            Token::Equal => EQUIVALENCE,
+            Token::Neq => EQUIVALENCE,
             Token::BitAnd => BIT_AND,
             Token::Xor => BIT_XOR,
             Token::BitOr => BIT_OR,
+            Token::And => LOGIC_AND,
+            Token::Or => LOGIC_OR,
+            Token::Assign => ASSIGNMENT,
             _ => panic!("Incorrect usage"),
         }
     }
@@ -56,7 +78,7 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
     // Boundary characeters
     let boundary_characters = [
         b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b'&', b'|', b'^', b'<',
-        b'>', b' ', b'\n',
+        b'>', b'!', b'=', b' ', b'\n',
     ];
 
     // Identifiers
@@ -117,16 +139,38 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
                         if l + 1 < byte_str.len() && byte_str[l + 1] == b'<' {
                             l += 1;
                             Token::LeftShift
+                        } else if byte_str[l + 1] == b'=' {
+                            l += 1;
+                            Token::Leq
                         } else {
-                            Token::LessThan
+                            Token::Le
                         }
                     }
                     b'>' => {
                         if l + 1 < byte_str.len() && byte_str[l + 1] == b'>' {
                             l += 1;
                             Token::RightShift
+                        } else if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                            l += 1;
+                            Token::Geq
                         } else {
-                            Token::GreaterThan
+                            Token::Ge
+                        }
+                    }
+                    b'!' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                            l += 1;
+                            Token::Neq
+                        } else {
+                            Token::Not
+                        }
+                    }
+                    b'=' => {
+                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                            l += 1;
+                            Token::Equal
+                        } else {
+                            Token::Assign
                         }
                     }
                     _ => panic!("How"),

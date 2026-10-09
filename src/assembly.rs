@@ -73,6 +73,11 @@ fn statement_to_ast_a(instructions: Vec<TInstruction>) -> Vec<AInstruction> {
                     dst_operand,
                 );
             }
+            TInstruction::Copy(value, value1) => todo!(),
+            TInstruction::Jump(_) => todo!(),
+            TInstruction::JumpIfZero(value, _) => todo!(),
+            TInstruction::JumpIfNotZero(value, _) => todo!(),
+            TInstruction::Label(_) => todo!(),
         }
     }
 
@@ -132,6 +137,7 @@ fn unary_op_to_ast_a(unary_op: &TUnaryOperator) -> AUnaryOperator {
     match unary_op {
         TUnaryOperator::Complement => AUnaryOperator::Complement,
         TUnaryOperator::Negate => AUnaryOperator::Negate,
+        TUnaryOperator::Not => todo!(),
     }
 }
 

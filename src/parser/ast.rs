@@ -25,6 +25,7 @@ pub enum Statement {
 pub enum UnaryOperator {
     Complement,
     Negate,
+    Not,
 }
 
 #[derive(Debug)]
@@ -39,4 +40,13 @@ pub enum BinaryOperator {
     Xor,
     LeftShift,
     RightShift,
+    And,
+    Or,
+    Equal,
+    Neq,
+    Le,
+    Leq,
+    Ge,
+    Geq,
+    Assign,
 }

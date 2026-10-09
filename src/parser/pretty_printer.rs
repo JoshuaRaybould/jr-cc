@@ -73,6 +73,7 @@ fn get_unary_op(operator: CUnaryOperator) -> String {
     match operator {
         CUnaryOperator::Complement => "~".to_string(),
         CUnaryOperator::Negate => "-".to_string(),
+        CUnaryOperator::Not => "!".to_string(),
     }
 }
 
@@ -88,5 +89,14 @@ fn get_binary_op(operator: CBinaryOperator) -> String {
         CBinaryOperator::Xor => "Xor".to_string(),
         CBinaryOperator::LeftShift => "LShift".to_string(),
         CBinaryOperator::RightShift => "RShift".to_string(),
+        CBinaryOperator::And => "And".to_string(),
+        CBinaryOperator::Or => "Or".to_string(),
+        CBinaryOperator::Equal => "equal".to_string(),
+        CBinaryOperator::Neq => "NotEqual".to_string(),
+        CBinaryOperator::Le => "LessThan".to_string(),
+        CBinaryOperator::Leq => "Leq".to_string(),
+        CBinaryOperator::Ge => "GreaterThan".to_string(),
+        CBinaryOperator::Geq => "Geq".to_string(),
+        CBinaryOperator::Assign => "Assign".to_string(),
     }
 }

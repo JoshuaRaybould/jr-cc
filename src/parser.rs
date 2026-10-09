@@ -90,6 +90,15 @@ impl MyParser {
             Token::Xor,
             Token::LeftShift,
             Token::RightShift,
+            Token::And,
+            Token::Or,
+            Token::Equal,
+            Token::Neq,
+            Token::Le,
+            Token::Leq,
+            Token::Ge,
+            Token::Geq,
+            Token::Assign,
         ];
 
         while binary_operators.contains(next_tok) && next_tok.get_precedence() >= min_prec {
@@ -104,6 +113,15 @@ impl MyParser {
                 Token::Xor => CBinaryOperator::Xor,
                 Token::LeftShift => CBinaryOperator::LeftShift,
                 Token::RightShift => CBinaryOperator::RightShift,
+                Token::And => CBinaryOperator::And,
+                Token::Or => CBinaryOperator::Or,
+                Token::Equal => CBinaryOperator::Equal,
+                Token::Neq => CBinaryOperator::Neq,
+                Token::Le => CBinaryOperator::Le,
+                Token::Leq => CBinaryOperator::Leq,
+                Token::Ge => CBinaryOperator::Ge,
+                Token::Geq => CBinaryOperator::Geq,
+                Token::Assign => CBinaryOperator::Assign,
                 _ => panic!("Impossible!"),
             };
             let precedence = next_tok.get_precedence();
@@ -141,6 +159,11 @@ impl MyParser {
                 self.parse_tok(Token::Complement);
                 let inner_exp = self.parse_factor();
                 CExpression::Unary(CUnaryOperator::Complement, Box::new(inner_exp))
+            }
+            Token::Not => {
+                self.parse_tok(Token::Not);
+                let inner_exp = self.parse_factor();
+                CExpression::Unary(CUnaryOperator::Not, Box::new(inner_exp))
             }
             Token::Constant(_) => CExpression::Constant(self.parse_int()),
             x => panic!("Malformed expression! Got {:?}", x),

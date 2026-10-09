@@ -9,6 +9,11 @@ pub enum Instruction {
     Return(Value),
     Unary(UnaryOperator, Value, Value),
     Binary(BinaryOperator, Value, Value, Value),
+    Copy(Value, Value),
+    Jump(String),
+    JumpIfZero(Value, String),
+    JumpIfNotZero(Value, String),
+    Label(String),
 }
 
 #[derive(Debug, Clone)]
@@ -21,6 +26,7 @@ pub enum Value {
 pub enum UnaryOperator {
     Complement,
     Negate,
+    Not,
 }
 
 #[derive(Debug, PartialEq)]
@@ -35,4 +41,13 @@ pub enum BinaryOperator {
     Xor,
     LeftShift,
     RightShift,
+    And,
+    Or,
+    Equal,
+    Neq,
+    Le,
+    Leq,
+    Ge,
+    Geq,
+    Assign,
 }
