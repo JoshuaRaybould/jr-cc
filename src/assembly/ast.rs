@@ -5,7 +5,7 @@ pub struct Program(pub Function);
 #[derive(Debug)]
 pub struct Function(pub Identifier, pub Vec<Instruction>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Identifier(pub String);
 
 #[derive(Debug, Clone)]
@@ -13,8 +13,13 @@ pub enum Instruction {
     Mov(Operand, Operand),
     Unary(UnaryOperator, Operand),
     Binary(BinaryOperator, Operand, Operand),
+    Cmp(Operand, Operand),
     Idiv(Operand),
     Cdq,
+    Jmp(Identifier),
+    JmpCC(CondCode, Identifier),
+    SetCC(CondCode, Operand),
+    Label(Identifier),
     AllocateStack(i32),
     Ret,
 }
@@ -31,6 +36,16 @@ pub enum Operand {
     Reg(Register),
     Pseudo(String),
     Stack(i32),
+}
+
+#[derive(Debug, Clone)]
+pub enum CondCode {
+    E,
+    NE,
+    G,
+    GE,
+    L,
+    LE,
 }
 
 #[derive(Debug, Clone)]

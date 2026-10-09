@@ -52,6 +52,11 @@ impl CodeEmitter {
                     self.write_to_file(format!("\tidivl {}", self.get_operand_str(operand)))
                 }
                 Instruction::Cdq => self.write_to_file("\tcdq".to_string()),
+                Instruction::Cmp(operand, operand1) => todo!(),
+                Instruction::Jmp(identifier) => todo!(),
+                Instruction::JmpCC(cond_code, identifier) => todo!(),
+                Instruction::SetCC(cond_code, operand) => todo!(),
+                Instruction::Label(identifier) => todo!(),
             }
         }
     }
