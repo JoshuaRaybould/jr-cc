@@ -38,6 +38,11 @@ impl PseudoRegReplacer {
                 AInstruction::Idiv(operand) => {
                     self.replace_pseudo_reg(operand);
                 }
+                AInstruction::SetCC(_, dst) => self.replace_pseudo_reg(dst),
+                AInstruction::Cmp(src1, src2) => {
+                    self.replace_pseudo_reg(src1);
+                    self.replace_pseudo_reg(src2);
+                }
                 _ => {}
             }
         }

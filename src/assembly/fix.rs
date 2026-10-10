@@ -1,11 +1,6 @@
 use crate::assembly::ast::{
-    BinaryOperator as ABinaryOperator, CondCode, Function as AFunction, Identifier as AIdentifier,
-    Instruction as AInstruction, Operand as AOperand, Program as AProgram, Register as ARegister,
-    UnaryOperator as AUnaryOperator,
-};
-use crate::tacky::ast::{
-    BinaryOperator as TBinaryOperator, Function as TFunction, Instruction as TInstruction,
-    Program as TProgram, UnaryOperator as TUnaryOperator, Value as TValue,
+    BinaryOperator as ABinaryOperator, Function as AFunction, Instruction as AInstruction,
+    Operand as AOperand, Program as AProgram, Register as ARegister,
 };
 
 pub fn fix_instructions(program: &mut AProgram, offset: i32) {
@@ -25,9 +20,12 @@ fn fix_each_instruction(instructions: &Vec<AInstruction>, offset: i32) -> Vec<AI
         match instruction {
             AInstruction::Mov(src, dst) => fix_mov_instr(&mut fixed_instrs, instruction, src, dst),
             AInstruction::Binary(b_op, src, dst) => {
-                fix_bin_instr(&mut fixed_instrs, instruction, b_op, src, dst);
+                fix_bin_instr(&mut fixed_instrs, instruction, b_op, src, dst)
             }
             AInstruction::Idiv(op) => fix_idiv_instr(&mut fixed_instrs, op),
+            AInstruction::Cmp(src1, src2) => {
+                fix_cmp_instr(&mut fixed_instrs, instruction, src1, src2)
+            }
             _ => fixed_instrs.push(instruction.clone()),
         }
     }
@@ -58,6 +56,33 @@ fn fix_mov_instr(
             AOperand::Stack(_) => {
                 let instr1 = AInstruction::Mov(src.clone(), AOperand::Reg(ARegister::R10));
                 let instr2 = AInstruction::Mov(AOperand::Reg(ARegister::R10), dst.clone());
+                fixed_instrs.push(instr1);
+                fixed_instrs.push(instr2);
+            }
+            _ => fixed_instrs.push(instruction.clone()),
+        },
+        _ => fixed_instrs.push(instruction.clone()),
+    }
+}
+
+fn fix_cmp_instr(
+    fixed_instrs: &mut Vec<AInstruction>,
+    instruction: &AInstruction,
+    src: &AOperand,
+    dst: &AOperand,
+) {
+    match dst {
+        AOperand::Imm(val) => {
+            let instr1 =
+                AInstruction::Mov(AOperand::Imm(val.clone()), AOperand::Reg(ARegister::R11));
+            let instr2 = AInstruction::Cmp(src.clone(), AOperand::Reg(ARegister::R11));
+            fixed_instrs.push(instr1);
+            fixed_instrs.push(instr2);
+        }
+        AOperand::Stack(_) => match src {
+            AOperand::Stack(_) => {
+                let instr1 = AInstruction::Mov(src.clone(), AOperand::Reg(ARegister::R10));
+                let instr2 = AInstruction::Cmp(AOperand::Reg(ARegister::R10), dst.clone());
                 fixed_instrs.push(instr1);
                 fixed_instrs.push(instr2);
             }

@@ -76,18 +76,6 @@ fn statement_to_ast_a(instructions: Vec<TInstruction>) -> Vec<AInstruction> {
     return a_instructions;
 }
 
-const SIMPLE_BIN: [TBinaryOperator; 8] = [
-    // These get turned into instructions with a mov then the binary operation.
-    TBinaryOperator::Add,
-    TBinaryOperator::Subtract,
-    TBinaryOperator::Multiply,
-    TBinaryOperator::Xor,
-    TBinaryOperator::BitOr,
-    TBinaryOperator::BitAnd,
-    TBinaryOperator::LeftShift,
-    TBinaryOperator::RightShift,
-];
-
 fn add_binary_instructions(
     a_instructions: &mut Vec<AInstruction>,
     b_op: &TBinaryOperator,
@@ -95,14 +83,36 @@ fn add_binary_instructions(
     src2: AOperand,
     dst: AOperand,
 ) {
-    let div_rem = [TBinaryOperator::Divide, TBinaryOperator::Remainder];
+    const SIMPLE_BIN: [TBinaryOperator; 8] = [
+        // These get turned into instructions with a mov then the binary operation.
+        TBinaryOperator::Add,
+        TBinaryOperator::Subtract,
+        TBinaryOperator::Multiply,
+        TBinaryOperator::Xor,
+        TBinaryOperator::BitOr,
+        TBinaryOperator::BitAnd,
+        TBinaryOperator::LeftShift,
+        TBinaryOperator::RightShift,
+    ];
+
+    const RELATIONAL_OPERATORS: [TBinaryOperator; 6] = [
+        TBinaryOperator::Equal,
+        TBinaryOperator::Neq,
+        TBinaryOperator::Ge,
+        TBinaryOperator::Geq,
+        TBinaryOperator::Le,
+        TBinaryOperator::Leq,
+    ];
+
+    const DIV_REM: [TBinaryOperator; 2] = [TBinaryOperator::Divide, TBinaryOperator::Remainder];
+
     if SIMPLE_BIN.contains(b_op) {
         let op = binary_op_to_ast_a(b_op);
         let instr1 = AInstruction::Mov(src1, dst.clone());
         let instr2 = AInstruction::Binary(op, src2, dst);
         a_instructions.push(instr1);
         a_instructions.push(instr2);
-    } else if div_rem.contains(b_op) {
+    } else if DIV_REM.contains(b_op) {
         let instr1 = AInstruction::Mov(src1, AOperand::Reg(ARegister::AX));
         let instr2 = AInstruction::Cdq;
         let instr3 = AInstruction::Idiv(src2);
@@ -115,6 +125,22 @@ fn add_binary_instructions(
         a_instructions.push(instr2);
         a_instructions.push(instr3);
         a_instructions.push(instr4);
+    } else if RELATIONAL_OPERATORS.contains(b_op) {
+        let instr1 = AInstruction::Cmp(src2, src1);
+        let instr2 = AInstruction::Mov(AOperand::Imm(0), dst.clone());
+        let rel_op = match b_op {
+            TBinaryOperator::Equal => CondCode::E,
+            TBinaryOperator::Neq => CondCode::NE,
+            TBinaryOperator::Le => CondCode::L,
+            TBinaryOperator::Leq => CondCode::LE,
+            TBinaryOperator::Geq => CondCode::GE,
+            TBinaryOperator::Ge => CondCode::G,
+            _ => panic!("Not possible!"),
+        };
+        let instr3 = AInstruction::SetCC(rel_op, dst);
+        a_instructions.push(instr1);
+        a_instructions.push(instr2);
+        a_instructions.push(instr3);
     }
 }
 
@@ -129,7 +155,7 @@ fn unary_op_to_ast_a(unary_op: &TUnaryOperator) -> AUnaryOperator {
     match unary_op {
         TUnaryOperator::Complement => AUnaryOperator::Complement,
         TUnaryOperator::Negate => AUnaryOperator::Negate,
-        TUnaryOperator::Not => todo!(),
+        _ => panic!("Expected complement or negate, got {:?}", unary_op),
     }
 }
 
@@ -195,5 +221,3 @@ fn binary_op_to_ast_a(binary_op: &TBinaryOperator) -> ABinaryOperator {
         _ => panic!(""),
     }
 }
-
-fn full_binary_to_ast_a() {}

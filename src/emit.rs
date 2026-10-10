@@ -48,15 +48,15 @@ impl CodeEmitter {
                 }
                 Instruction::AllocateStack(offset) => self.emit_aloc(offset),
                 Instruction::Binary(b_op, src, dst) => self.emit_binary_op(b_op, src, dst),
-                Instruction::Idiv(operand) => {
-                    self.write_to_file(format!("\tidivl {}", self.get_operand_str(operand)))
+                Instruction::Idiv(op) => {
+                    self.write_to_file(format!("\tidivl {}", self.get_operand_str(op)))
                 }
                 Instruction::Cdq => self.write_to_file("\tcdq".to_string()),
-                Instruction::Cmp(operand, operand1) => todo!(),
-                Instruction::Jmp(identifier) => todo!(),
-                Instruction::JmpCC(cond_code, identifier) => todo!(),
-                Instruction::SetCC(cond_code, operand) => todo!(),
-                Instruction::Label(identifier) => todo!(),
+                Instruction::Cmp(op1, op2) => self.emit_cmp(op1, op2),
+                Instruction::Jmp(Identifier(id)) => self.write_to_file(format!("jmp .L{}", id)),
+                Instruction::JmpCC(cond_code, identifier) => self.emit_jmpcc(cond_code, identifier),
+                Instruction::SetCC(cond_code, op) => self.emit_setcc(cond_code, op),
+                Instruction::Label(Identifier(id)) => self.write_to_file(format!(".L{}:", id)),
             }
         }
     }
@@ -73,6 +73,38 @@ impl CodeEmitter {
         self.write_to_file("\tmovq %rbp, %rsp".to_string());
         self.write_to_file("\tpopq %rbp".to_string());
         self.write_to_file("\tret".to_string());
+    }
+
+    fn get_cond_code(&self, cond_code: &CondCode) -> &str {
+        match cond_code {
+            CondCode::E => "e",
+            CondCode::NE => "ne",
+            CondCode::G => "g",
+            CondCode::GE => "ge",
+            CondCode::L => "l",
+            CondCode::LE => "le",
+        }
+    }
+
+    fn emit_jmpcc(&self, cond_code: &CondCode, identifier: &Identifier) {
+        let Identifier(id) = identifier;
+        let instr_suffix = self.get_cond_code(cond_code);
+        let instruction = format!("j{} .L{}", instr_suffix, id);
+        self.write_to_file(instruction);
+    }
+
+    fn emit_setcc(&self, cond_code: &CondCode, op: &Operand) {
+        let op_str = self.get_operand_str(op);
+        let instr_suffix = self.get_cond_code(cond_code);
+        let instruction = format!("\tset{} {}", instr_suffix, op_str);
+        self.write_to_file(instruction);
+    }
+
+    fn emit_cmp(&self, op1: &Operand, op2: &Operand) {
+        let op1_str = self.get_operand_str(op1);
+        let op2_str = self.get_operand_str(op2);
+        let instruction = format!("\tcmpl {}, {}", op1_str, op2_str);
+        self.write_to_file(instruction);
     }
 
     // Get operand string
