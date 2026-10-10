@@ -3,9 +3,9 @@ pub mod pretty_printer;
 
 use crate::lexer::Token;
 use crate::parser::ast::{
-    BinaryOperator as CBinaryOperator, Expression as CExpression, Function as CFunction,
-    Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
-    UnaryOperator as CUnaryOperator,
+    BinaryOperator as CBinaryOperator, BlockItem as CBlockItem, Declaration as CDeclaration,
+    Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
+    Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
 };
 
 pub struct MyParser {
@@ -45,31 +45,88 @@ impl MyParser {
         self.parse_tok(Token::Void); // Likely to need chaging later.
         self.parse_tok(Token::CloseParen);
         self.parse_tok(Token::OpenCurlyBrace);
-        let statement = self.parse_statement();
+        let block_items = self.parse_body();
         self.parse_tok(Token::CloseCurlyBrace);
-        return CFunction(identifier, statement);
+        return CFunction(identifier, block_items);
+    }
+
+    fn get_token(&self, expected: &str) -> &Token {
+        match self.tokens.get(self.pos) {
+            Some(cur_tok) => return cur_tok,
+            None => panic!(
+                "Expected an {:?}, but got nothing (parsing ended)",
+                expected
+            ),
+        };
     }
 
     fn parse_identifier(&mut self) -> CIdentifier {
-        let res = match self.tokens.get(self.pos) {
-            Some(cur_tok) => {
-                if let Token::Identifier(id_name) = cur_tok {
-                    CIdentifier(id_name.clone())
-                } else {
-                    panic!("Expected an identifier, but got {:?}", cur_tok);
-                }
-            }
-            None => panic!("Expected an identifier, but got nothing (parsing ended)"),
-        };
+        let expected_tok_name = "identifier";
+        let cur_tok = self.get_token(expected_tok_name);
+        let res;
+        if let Token::Identifier(id_name) = cur_tok {
+            res = CIdentifier(id_name.clone())
+        } else {
+            self.got_unexpected_token(expected_tok_name, cur_tok)
+        }
+
         self.pos += 1;
         return res;
     }
 
-    fn parse_statement(&mut self) -> CStatement {
-        self.parse_tok(Token::Return);
-        let exp = self.parse_expression(0);
+    fn parse_body(&mut self) -> Vec<CBlockItem> {
+        let mut block_items = Vec::new();
+        loop {
+            let cur_tok = self.get_token("statement or declaration");
+            if *cur_tok == Token::CloseCurlyBrace {
+                return block_items;
+            }
+            let block_item = self.parse_block_item();
+            block_items.push(block_item);
+        }
+    }
+
+    fn parse_block_item(&mut self) -> CBlockItem {
+        let cur_tok = self.get_token("statement or declaration");
+        if *cur_tok == Token::Int {
+            let declaration = self.parse_declaration();
+            return CBlockItem::D(declaration);
+        } else {
+            let statement = self.parse_statement();
+            return CBlockItem::S(statement);
+        }
+    }
+
+    fn parse_declaration(&mut self) -> CDeclaration {
+        self.parse_tok(Token::Int);
+        let identifier = self.parse_identifier();
+
+        let cur_tok = self.get_token("= (assignment) or ;");
+        if *cur_tok == Token::Assign {
+            self.parse_tok(Token::Assign);
+            let exp = self.parse_expression(0);
+            self.parse_tok(Token::SemiColon);
+            return CDeclaration(identifier, Some(exp));
+        }
         self.parse_tok(Token::SemiColon);
-        return CStatement::Return(exp);
+        return CDeclaration(identifier, None);
+    }
+
+    fn parse_statement(&mut self) -> CStatement {
+        let cur_tok = self.get_token("return, ; or an expression");
+        if *cur_tok == Token::Return {
+            self.parse_tok(Token::Return);
+            let exp = self.parse_expression(0);
+            self.parse_tok(Token::SemiColon);
+            return CStatement::Return(exp);
+        } else if *cur_tok == Token::SemiColon {
+            self.parse_tok(Token::SemiColon);
+            return CStatement::Null;
+        } else {
+            let exp = self.parse_expression(0);
+            self.parse_tok(Token::SemiColon);
+            return CStatement::Exp(exp);
+        }
     }
 
     fn parse_expression(&mut self, min_prec: i32) -> CExpression {
@@ -166,6 +223,7 @@ impl MyParser {
                 CExpression::Unary(CUnaryOperator::Not, Box::new(inner_exp))
             }
             Token::Constant(_) => CExpression::Constant(self.parse_int()),
+            Token::Identifier(_) => CExpression::Var(self.parse_var()),
             x => panic!("Malformed expression! Got {:?}", x),
         };
 
@@ -173,17 +231,34 @@ impl MyParser {
     }
 
     fn parse_int(&mut self) -> i32 {
-        let res = match self.tokens.get(self.pos) {
-            Some(cur_tok) => {
-                if let Token::Constant(val) = cur_tok {
-                    val
-                } else {
-                    panic!("Expected an identifier, but got {:?}", cur_tok);
-                }
-            }
-            None => panic!("Expected an identifier, but got nothing (parsing ended)"),
-        };
+        let expected_tok_name = "int";
+        let cur_tok = self.get_token(expected_tok_name);
+        let res;
+        if let Token::Constant(val) = cur_tok {
+            res = *val;
+        } else {
+            self.got_unexpected_token(expected_tok_name, cur_tok);
+        }
+
         self.pos += 1;
-        return *res;
+        return res;
+    }
+
+    fn parse_var(&mut self) -> CIdentifier {
+        let expected_tok_name = "identifier";
+        let cur_tok = self.get_token(expected_tok_name);
+        let res;
+        if let Token::Identifier(id) = cur_tok {
+            res = CIdentifier(id.clone());
+        } else {
+            self.got_unexpected_token(expected_tok_name, cur_tok)
+        }
+
+        self.pos += 1;
+        return res;
+    }
+
+    fn got_unexpected_token(&self, expected_tok_name: &str, cur_tok: &Token) -> ! {
+        panic!("Expected an {} but got {:?}", expected_tok_name, cur_tok)
     }
 }

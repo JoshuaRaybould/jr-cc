@@ -70,10 +70,11 @@ fn main() {
         Modes::Lex => {} // Lexing it done by default above since all modes need it!!!
         Modes::Parse => {
             let parsed = parser.parse();
-            pretty_print(parsed);
+            pretty_print(&parsed);
         }
         Modes::Tacky => {
             let parsed = parser.parse();
+            pretty_print(&parsed);
             let mut tacky = TackyTree {
                 ..Default::default()
             };

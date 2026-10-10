@@ -1,7 +1,7 @@
 pub mod ast;
 
 use crate::parser::ast::{
-    BinaryOperator as CBinaryOperator, Expression as CExpression, Function as CFunction,
+    BinaryOperator as CBinaryOperator, BlockItem, Expression as CExpression, Function as CFunction,
     Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
     UnaryOperator as CUnaryOperator,
 };
@@ -25,11 +25,15 @@ impl TackyTree {
     }
 
     fn func_to_tacky(&mut self, func: CFunction) -> TFunction {
-        let CFunction(identifier, statement) = func;
+        let CFunction(identifier, block_items) = func;
         let CIdentifier(name) = identifier;
-        let instructions = self.statement_to_tacky(statement);
+        let instructions = self.block_items_to_tacky(block_items);
 
         return TFunction(name, instructions);
+    }
+
+    fn block_items_to_tacky(&mut self, block_items: Vec<BlockItem>) -> Vec<TInstruction> {
+        todo!();
     }
 
     fn statement_to_tacky(&mut self, statement: CStatement) -> Vec<TInstruction> {
@@ -41,6 +45,8 @@ impl TackyTree {
                 let instruction = TInstruction::Return(value);
                 instructions.push(instruction);
             }
+            CStatement::Exp(expression) => todo!(),
+            CStatement::Null => todo!(),
         }
 
         return instructions;
@@ -80,6 +86,8 @@ impl TackyTree {
                     return var;
                 }
             },
+            CExpression::Assignment(_, _) => todo!(),
+            CExpression::Var(_) => todo!(),
         }
     }
 
