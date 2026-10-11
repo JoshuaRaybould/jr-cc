@@ -181,10 +181,18 @@ impl MyParser {
                 Token::Assign => CBinaryOperator::Assign,
                 _ => panic!("Impossible!"),
             };
-            let precedence = next_tok.get_precedence();
-            self.parse_tok(next_tok.clone());
-            let right = self.parse_expression(precedence + 1);
-            left = CExpression::Binary(op, Box::new(left), Box::new(right));
+
+            if op == CBinaryOperator::Assign {
+                let precedence = next_tok.get_precedence();
+                self.parse_tok(Token::Assign);
+                let right = self.parse_expression(precedence);
+                left = CExpression::Assignment(Box::new(left), Box::new(right));
+            } else {
+                let precedence = next_tok.get_precedence();
+                self.parse_tok(next_tok.clone());
+                let right = self.parse_expression(precedence + 1);
+                left = CExpression::Binary(op, Box::new(left), Box::new(right));
+            }
             next_tok = self
                 .tokens
                 .get(self.pos)

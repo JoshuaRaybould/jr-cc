@@ -53,7 +53,8 @@ fn pretty_print_statement(statement: &CStatement, indent: usize) {
         }
         CStatement::Exp(expression) => {
             println!("{}Expression(", indentation);
-            pretty_print_expression(expression, indent);
+            pretty_print_expression(expression, indent + 1);
+            println!("{})", indentation);
         }
         CStatement::Null => println!("Null"),
     }
@@ -100,7 +101,7 @@ fn get_expression_str(expression: &CExpression) -> String {
         CExpression::Assignment(expression, expression1) => {
             let expr_str_1 = get_expression_str(expression);
             let expr_str_2 = get_expression_str(expression1);
-            format!("{} {}", expr_str_1, expr_str_2)
+            format!("{}=({})", expr_str_1, expr_str_2)
         }
     }
 }
