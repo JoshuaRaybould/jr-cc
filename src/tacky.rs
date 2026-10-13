@@ -1,9 +1,9 @@
 pub mod ast;
 
 use crate::parser::ast::{
-    BinaryOperator as CBinaryOperator, BlockItem, Expression as CExpression, Function as CFunction,
-    Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
-    UnaryOperator as CUnaryOperator,
+    BinaryOperator as CBinaryOperator, BlockItem, Declaration as CDeclaration,
+    Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
+    Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
 };
 use crate::tacky::ast::{
     BinaryOperator as TBinaryOperator, Function as TFunction, Instruction as TInstruction,
@@ -33,23 +33,52 @@ impl TackyTree {
     }
 
     fn block_items_to_tacky(&mut self, block_items: Vec<BlockItem>) -> Vec<TInstruction> {
-        todo!();
-    }
-
-    fn statement_to_tacky(&mut self, statement: CStatement) -> Vec<TInstruction> {
         let mut instructions = Vec::new();
 
+        for block_item in &block_items {
+            match block_item {
+                BlockItem::S(statement) => {
+                    self.statement_to_tacky(statement.clone(), &mut instructions);
+                }
+                BlockItem::D(declaration) => {
+                    self.declaration_to_tacky(declaration.clone(), &mut instructions);
+                }
+            }
+        }
+        instructions.push(TInstruction::Return(TValue::Constant(0)));
+        return instructions;
+    }
+
+    fn declaration_to_tacky(
+        &mut self,
+        declaration: CDeclaration,
+        instructions: &mut Vec<TInstruction>,
+    ) -> Option<TValue> {
+        let CDeclaration(identifier, opt_expr) = declaration;
+        let cur_expr = match opt_expr {
+            Some(expr) => expr,
+            None => return None,
+        };
+        let CIdentifier(id) = identifier;
+        let v = TValue::Var(id);
+        let res = self.expr_to_tacky(cur_expr, instructions);
+        let instruction = TInstruction::Copy(res, v.clone());
+        instructions.push(instruction);
+        return Some(v);
+    }
+
+    fn statement_to_tacky(&mut self, statement: CStatement, instructions: &mut Vec<TInstruction>) {
         match statement {
             CStatement::Return(expression) => {
-                let value = self.expr_to_tacky(expression, &mut instructions);
+                let value = self.expr_to_tacky(expression, instructions);
                 let instruction = TInstruction::Return(value);
                 instructions.push(instruction);
             }
-            CStatement::Exp(expression) => todo!(),
-            CStatement::Null => todo!(),
+            CStatement::Exp(expression) => {
+                self.expr_to_tacky(expression, instructions);
+            }
+            CStatement::Null => {}
         }
-
-        return instructions;
     }
 
     fn expr_to_tacky(
@@ -86,8 +115,17 @@ impl TackyTree {
                     return var;
                 }
             },
-            CExpression::Assignment(_, _) => todo!(),
-            CExpression::Var(_) => todo!(),
+            CExpression::Assignment(dst, src) => {
+                let v = match *dst {
+                    CExpression::Var(CIdentifier(id)) => TValue::Var(id),
+                    _ => panic!(),
+                };
+                let res = self.expr_to_tacky(*src, instructions);
+                let instruction = TInstruction::Copy(res, v.clone());
+                instructions.push(instruction);
+                return v;
+            }
+            CExpression::Var(CIdentifier(id)) => return TValue::Var(id),
         }
     }
 

@@ -1,7 +1,6 @@
 use crate::parser::ast::{
-    BinaryOperator as CBinaryOperator, BlockItem as CBlockItem, Declaration as CDeclaration,
-    Expression as CExpression, Function as CFunction, Identifier as CIdentifier,
-    Program as CProgram, Statement as CStatement, UnaryOperator as CUnaryOperator,
+    BlockItem as CBlockItem, Declaration as CDeclaration, Expression as CExpression,
+    Function as CFunction, Identifier as CIdentifier, Program as CProgram, Statement as CStatement,
 };
 use std::collections::HashMap;
 

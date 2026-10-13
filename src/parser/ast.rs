@@ -8,7 +8,7 @@ pub struct Function(pub Identifier, pub Vec<BlockItem>);
 #[derive(Debug, Clone)]
 pub struct Identifier(pub String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Declaration(pub Identifier, pub Option<Expression>);
 
 #[derive(Debug)]
@@ -26,7 +26,7 @@ pub enum Expression {
     Assignment(Box<Expression>, Box<Expression>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Return(Expression),
     Exp(Expression),

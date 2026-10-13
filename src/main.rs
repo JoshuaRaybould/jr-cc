@@ -90,28 +90,43 @@ fn main() {
         }
         Modes::Tacky => {
             let parsed = parser.parse();
-            pretty_print(&parsed);
-            let mut tacky = TackyTree {
+            let mut semantic_analysis = SemanticAnalysis {
                 ..Default::default()
             };
-            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            let analysed = semantic_analysis.resolve_all(parsed);
+            pretty_print(&analysed);
+            let mut tacky = TackyTree {
+                tmp_var: semantic_analysis.tmp_var,
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(analysed);
             println!("{:?}", tacky_prog);
         }
         Modes::Codegen => {
             let parsed = parser.parse();
-            let mut tacky = TackyTree {
+            let mut semantic_analysis = SemanticAnalysis {
                 ..Default::default()
             };
-            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            let analysed = semantic_analysis.resolve_all(parsed);
+            let mut tacky = TackyTree {
+                tmp_var: semantic_analysis.tmp_var,
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(analysed);
             let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
             println!("{:?}", ast_assembly);
         }
         Modes::Full => {
             let parsed = parser.parse();
-            let mut tacky = TackyTree {
+            let mut semantic_analysis = SemanticAnalysis {
                 ..Default::default()
             };
-            let tacky_prog = tacky.ast_c_to_tacky(parsed);
+            let analysed = semantic_analysis.resolve_all(parsed);
+            let mut tacky = TackyTree {
+                tmp_var: semantic_analysis.tmp_var,
+                ..Default::default()
+            };
+            let tacky_prog = tacky.ast_c_to_tacky(analysed);
             let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
             let code_emitter = CodeEmitter {
                 program: ast_assembly,
