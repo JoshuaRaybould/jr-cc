@@ -1,1 +1,10 @@
 /target
+
+# Compiler driver output
+*.i
+*.s
+a.out
+
+# Python / pytest
+__pycache__/
+.pytest_cache/

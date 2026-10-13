@@ -192,7 +192,7 @@ pub fn do_lexing(args: &str) -> Vec<Token> {
                     tokens.push(Token::Constant(cur_token));
                 }
                 l = r;
-            } else if cur_char.is_ascii_alphabetic() {
+            } else if cur_char.is_ascii_alphabetic() || cur_char == b'_' {
                 // Identifier case
                 r = l + 1;
 

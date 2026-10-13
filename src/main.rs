@@ -70,69 +70,47 @@ fn main() {
     out_fname = format!("{}s", out_fname);
     let contents = fs::read_to_string(fname).expect("Problem reading file!");
 
-    let tokens = do_lexing(&contents); // Lexing is done here!!!
+    // Stop early if the requested mode is reached.
+    let tokens = do_lexing(&contents);
+    if mode == Modes::Lex {
+        return;
+    }
 
     let mut parser = MyParser { tokens, pos: 0 };
+    let parsed = parser.parse();
+    if mode == Modes::Parse {
+        pretty_print(&parsed);
+        return;
+    }
 
-    match mode {
-        Modes::Lex => {} // Lexing is done by default above since all modes need it!!!
-        Modes::Parse => {
-            let parsed = parser.parse();
-            pretty_print(&parsed);
-        }
-        Modes::Valid => {
-            let parsed = parser.parse();
-            let mut semantic_analysis = SemanticAnalysis {
-                ..Default::default()
-            };
-            let analysed = semantic_analysis.resolve_all(parsed);
-            pretty_print(&analysed);
-        }
-        Modes::Tacky => {
-            let parsed = parser.parse();
-            let mut semantic_analysis = SemanticAnalysis {
-                ..Default::default()
-            };
-            let analysed = semantic_analysis.resolve_all(parsed);
-            pretty_print(&analysed);
-            let mut tacky = TackyTree {
-                tmp_var: semantic_analysis.tmp_var,
-                ..Default::default()
-            };
-            let tacky_prog = tacky.ast_c_to_tacky(analysed);
-            println!("{:?}", tacky_prog);
-        }
-        Modes::Codegen => {
-            let parsed = parser.parse();
-            let mut semantic_analysis = SemanticAnalysis {
-                ..Default::default()
-            };
-            let analysed = semantic_analysis.resolve_all(parsed);
-            let mut tacky = TackyTree {
-                tmp_var: semantic_analysis.tmp_var,
-                ..Default::default()
-            };
-            let tacky_prog = tacky.ast_c_to_tacky(analysed);
-            let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
-            println!("{:?}", ast_assembly);
-        }
-        Modes::Full => {
-            let parsed = parser.parse();
-            let mut semantic_analysis = SemanticAnalysis {
-                ..Default::default()
-            };
-            let analysed = semantic_analysis.resolve_all(parsed);
-            let mut tacky = TackyTree {
-                tmp_var: semantic_analysis.tmp_var,
-                ..Default::default()
-            };
-            let tacky_prog = tacky.ast_c_to_tacky(analysed);
-            let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
-            let code_emitter = CodeEmitter {
-                program: ast_assembly,
-                fname: out_fname,
-            };
-            code_emitter.emit_code();
+    let mut semantic_analysis = SemanticAnalysis::default();
+    let analysed = semantic_analysis.resolve_all(parsed);
+    if mode == Modes::Valid || mode == Modes::Tacky {
+        pretty_print(&analysed);
+        if mode == Modes::Valid {
+            return;
         }
     }
+
+    let mut tacky = TackyTree {
+        tmp_var: semantic_analysis.tmp_var,
+        ..Default::default()
+    };
+    let tacky_prog = tacky.ast_c_to_tacky(analysed);
+    if mode == Modes::Tacky {
+        println!("{:?}", tacky_prog);
+        return;
+    }
+
+    let ast_assembly = assembly::full_conversion_t_to_a(tacky_prog);
+    if mode == Modes::Codegen {
+        println!("{:?}", ast_assembly);
+        return;
+    }
+
+    let code_emitter = CodeEmitter {
+        program: ast_assembly,
+        fname: out_fname,
+    };
+    code_emitter.emit_code();
 }
