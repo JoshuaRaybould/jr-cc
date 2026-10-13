@@ -67,7 +67,7 @@ fn pretty_print_declaration(declaration: &CDeclaration, indent: usize) {
     match optional_expr {
         Some(expression) => {
             let expr_str = get_expression_str(expression);
-            println!("{}int({} = {})", indentation, id, expr_str);
+            println!("{}int({} = ({}))", indentation, id, expr_str);
         }
         None => println!("{}int({})", indentation, id),
     };

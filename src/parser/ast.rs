@@ -5,7 +5,7 @@ pub struct Program(pub Function);
 #[derive(Debug)]
 pub struct Function(pub Identifier, pub Vec<BlockItem>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Identifier(pub String);
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ pub enum BlockItem {
     D(Declaration),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Constant(i32),
     Var(Identifier),
@@ -34,14 +34,14 @@ pub enum Statement {
     //If(Expression, Box<Statement>, Option<Box<Statement>>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UnaryOperator {
     Complement,
     Negate,
     Not,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
     Add,
     Subtract,

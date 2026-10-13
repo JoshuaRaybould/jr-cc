@@ -5,12 +5,14 @@ use crate::emit::CodeEmitter;
 use crate::lexer::do_lexing;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer::pretty_print;
+use crate::semantic_analysis::SemanticAnalysis;
 use crate::tacky::TackyTree;
 
 mod assembly;
 mod emit;
 mod lexer;
 mod parser;
+mod semantic_analysis;
 mod tacky;
 
 #[derive(Parser, Debug)]
@@ -20,6 +22,9 @@ struct Args {
 
     #[arg(short, long)]
     lex: bool,
+
+    #[arg(short, long)]
+    valid: bool,
 
     #[arg(short, long)]
     tacky: bool,
@@ -35,6 +40,7 @@ struct Args {
 enum Modes {
     Lex,
     Parse,
+    Valid,
     Tacky,
     Codegen,
     Full,
@@ -47,7 +53,9 @@ fn main() {
     if args.codegen {
         mode = Modes::Codegen;
     } else if args.tacky {
-        mode = Modes::Tacky
+        mode = Modes::Tacky;
+    } else if args.valid {
+        mode = Modes::Valid;
     } else if args.parse {
         mode = Modes::Parse;
     } else if args.lex {
@@ -67,10 +75,18 @@ fn main() {
     let mut parser = MyParser { tokens, pos: 0 };
 
     match mode {
-        Modes::Lex => {} // Lexing it done by default above since all modes need it!!!
+        Modes::Lex => {} // Lexing is done by default above since all modes need it!!!
         Modes::Parse => {
             let parsed = parser.parse();
             pretty_print(&parsed);
+        }
+        Modes::Valid => {
+            let parsed = parser.parse();
+            let mut semantic_analysis = SemanticAnalysis {
+                ..Default::default()
+            };
+            let analysed = semantic_analysis.resolve_all(parsed);
+            pretty_print(&analysed);
         }
         Modes::Tacky => {
             let parsed = parser.parse();
