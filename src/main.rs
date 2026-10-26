@@ -2,7 +2,7 @@ use clap::Parser;
 use std::fs;
 
 use crate::emit::CodeEmitter;
-use crate::lexer::do_lexing;
+use crate::lexer::Lexer;
 use crate::parser::MyParser;
 use crate::parser::pretty_printer::pretty_print;
 use crate::semantic_analysis::SemanticAnalysis;
@@ -71,8 +71,10 @@ fn main() {
     let contents = fs::read_to_string(fname).expect("Problem reading file!");
 
     // Stop early if the requested mode is reached.
-    let tokens = do_lexing(&contents);
+    let mut my_lexer = Lexer { line: 0, column: 0 };
+    let tokens = my_lexer.do_lexing(&contents);
     if mode == Modes::Lex {
+        println!("{:?}", tokens);
         return;
     }
 

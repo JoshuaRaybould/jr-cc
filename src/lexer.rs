@@ -1,5 +1,17 @@
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Token {
+pub struct Token {
+    pub token_type: TokenType,
+    pub position: Position,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Position {
+    line: u32,
+    column: u32,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum TokenType {
     Identifier(String),
     Constant(i32),
     Int,
@@ -34,7 +46,7 @@ pub enum Token {
     Geq,
 }
 
-impl Token {
+impl TokenType {
     pub fn get_precedence(&self) -> i32 {
         const SECOND_HIGHEST: i32 = 70;
         const BIN_MULT_DIV: i32 = 60;
@@ -48,178 +60,231 @@ impl Token {
         const LOGIC_AND: i32 = 30;
         const LOGIC_OR: i32 = 28;
         const ASSIGNMENT: i32 = 20;
+
         match self {
-            Token::Not => SECOND_HIGHEST,
-            Token::Remainder => BIN_MULT_DIV,
-            Token::Multiply => BIN_MULT_DIV,
-            Token::Divide => BIN_MULT_DIV,
-            Token::Negate => BIN_PLUS_MINUS,
-            Token::Add => BIN_PLUS_MINUS,
-            Token::LeftShift => BIT_SHIFT,
-            Token::RightShift => BIT_SHIFT,
-            Token::Ge => COMPARING,
-            Token::Geq => COMPARING,
-            Token::Le => COMPARING,
-            Token::Leq => COMPARING,
-            Token::Equal => EQUIVALENCE,
-            Token::Neq => EQUIVALENCE,
-            Token::BitAnd => BIT_AND,
-            Token::Xor => BIT_XOR,
-            Token::BitOr => BIT_OR,
-            Token::And => LOGIC_AND,
-            Token::Or => LOGIC_OR,
-            Token::Assign => ASSIGNMENT,
+            TokenType::Not => SECOND_HIGHEST,
+            TokenType::Remainder => BIN_MULT_DIV,
+            TokenType::Multiply => BIN_MULT_DIV,
+            TokenType::Divide => BIN_MULT_DIV,
+            TokenType::Negate => BIN_PLUS_MINUS,
+            TokenType::Add => BIN_PLUS_MINUS,
+            TokenType::LeftShift => BIT_SHIFT,
+            TokenType::RightShift => BIT_SHIFT,
+            TokenType::Ge => COMPARING,
+            TokenType::Geq => COMPARING,
+            TokenType::Le => COMPARING,
+            TokenType::Leq => COMPARING,
+            TokenType::Equal => EQUIVALENCE,
+            TokenType::Neq => EQUIVALENCE,
+            TokenType::BitAnd => BIT_AND,
+            TokenType::Xor => BIT_XOR,
+            TokenType::BitOr => BIT_OR,
+            TokenType::And => LOGIC_AND,
+            TokenType::Or => LOGIC_OR,
+            TokenType::Assign => ASSIGNMENT,
             _ => panic!("Incorrect usage"),
         }
     }
 }
 
-pub fn do_lexing(args: &str) -> Vec<Token> {
-    // Boundary characeters
-    let boundary_characters = [
-        b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b'&', b'|', b'^', b'<',
-        b'>', b'!', b'=', b' ', b'\n',
-    ];
+pub struct Lexer {
+    pub line: u32,
+    pub column: u32,
+}
 
-    // Identifiers
-    const INT_KEYWORD: &[u8] = "int".as_bytes();
-    const VOID_KEYWORD: &[u8] = "void".as_bytes();
-    const RETURN_KEYWORD: &[u8] = "return".as_bytes();
+impl Lexer {
+    pub fn do_lexing(&mut self, args: &str) -> Vec<Token> {
+        // Boundary characeters
+        let boundary_characters = [
+            b'(', b')', b'{', b'}', b';', b'-', b'~', b'+', b'*', b'/', b'%', b'&', b'|', b'^',
+            b'<', b'>', b'!', b'=', b' ', b'\n',
+        ];
 
-    let mut tokens = Vec::new();
-    let byte_str = args.as_bytes();
-    let mut l = 0;
-    let mut r;
+        // Identifiers
+        const INT_KEYWORD: &[u8] = "int".as_bytes();
+        const VOID_KEYWORD: &[u8] = "void".as_bytes();
+        const RETURN_KEYWORD: &[u8] = "return".as_bytes();
 
-    while l < byte_str.len() {
-        let cur_char = byte_str[l];
-        if cur_char == b' ' || cur_char == b'\n' {
-            // Trim white space.
-            l += 1;
-        } else {
-            if boundary_characters.contains(&cur_char) {
-                // Boundary characetrs
-                let cur_token = match &cur_char {
-                    b'(' => Token::OpenParen,
-                    b')' => Token::CloseParen,
-                    b'{' => Token::OpenCurlyBrace,
-                    b'}' => Token::CloseCurlyBrace,
-                    b';' => Token::SemiColon,
-                    b'~' => Token::Complement,
-                    b'-' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'-' {
-                            l += 1;
-                            Token::Decrement
-                        } else {
-                            Token::Negate
-                        }
-                    }
-                    b'+' => Token::Add,
-                    b'/' => Token::Divide,
-                    b'*' => Token::Multiply,
-                    b'%' => Token::Remainder,
-                    b'&' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'&' {
-                            l += 1;
-                            Token::And
-                        } else {
-                            Token::BitAnd
-                        }
-                    }
-                    b'|' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'|' {
-                            l += 1;
-                            Token::Or
-                        } else {
-                            Token::BitOr
-                        }
-                    }
-                    b'^' => Token::Xor,
-                    b'<' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'<' {
-                            l += 1;
-                            Token::LeftShift
-                        } else if byte_str[l + 1] == b'=' {
-                            l += 1;
-                            Token::Leq
-                        } else {
-                            Token::Le
-                        }
-                    }
-                    b'>' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'>' {
-                            l += 1;
-                            Token::RightShift
-                        } else if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
-                            l += 1;
-                            Token::Geq
-                        } else {
-                            Token::Ge
-                        }
-                    }
-                    b'!' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
-                            l += 1;
-                            Token::Neq
-                        } else {
-                            Token::Not
-                        }
-                    }
-                    b'=' => {
-                        if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
-                            l += 1;
-                            Token::Equal
-                        } else {
-                            Token::Assign
-                        }
-                    }
-                    _ => panic!("How"),
-                };
-                tokens.push(cur_token);
-                l += 1
-            } else if cur_char.is_ascii_digit() {
-                // Integer case.
-                r = l + 1;
+        let mut tokens = Vec::new();
+        let byte_str = args.as_bytes();
+        let mut l = 0;
+        let mut r;
 
-                while r < byte_str.len() && byte_str[r].is_ascii_digit() {
-                    r += 1;
-                }
-                if r >= byte_str.len() || !boundary_characters.contains(&byte_str[r]) {
-                    panic!("An integer starts but has no word boundary character at the end");
-                } else {
-                    let tok_str = std::str::from_utf8(&byte_str[l..r]).unwrap();
-                    let cur_token = tok_str.parse().unwrap();
-                    tokens.push(Token::Constant(cur_token));
-                }
-                l = r;
-            } else if cur_char.is_ascii_alphabetic() || cur_char == b'_' {
-                // Identifier case
-                r = l + 1;
-
-                while r < byte_str.len()
-                    && (byte_str[r].is_ascii_alphanumeric() || byte_str[r] == b'_')
-                {
-                    r += 1;
-                }
-                if r >= byte_str.len() || !boundary_characters.contains(&byte_str[r]) {
-                    panic!("An integer starts but has no word boundary character at the end");
-                } else {
-                    let cur_token = match &byte_str[l..r] {
-                        INT_KEYWORD => Token::Int,
-                        VOID_KEYWORD => Token::Void,
-                        RETURN_KEYWORD => Token::Return,
-                        identifier => {
-                            Token::Identifier(String::from_utf8(identifier.to_vec()).expect(""))
+        while l < byte_str.len() {
+            let cur_char = byte_str[l];
+            if cur_char == b' ' {
+                // Trim white space.
+                l += 1;
+                self.column += 1;
+            } else if cur_char == b'\n' {
+                // Move to next line
+                l += 1;
+                self.line += 1;
+                self.column = 0;
+            } else {
+                if boundary_characters.contains(&cur_char) {
+                    // Boundary characetrs
+                    let tok_type = match &cur_char {
+                        b'(' => TokenType::OpenParen,
+                        b')' => TokenType::CloseParen,
+                        b'{' => TokenType::OpenCurlyBrace,
+                        b'}' => TokenType::CloseCurlyBrace,
+                        b';' => TokenType::SemiColon,
+                        b'~' => TokenType::Complement,
+                        b'-' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'-' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::Decrement
+                            } else {
+                                TokenType::Negate
+                            }
                         }
+                        b'+' => TokenType::Add,
+                        b'/' => TokenType::Divide,
+                        b'*' => TokenType::Multiply,
+                        b'%' => TokenType::Remainder,
+                        b'&' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'&' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::And
+                            } else {
+                                TokenType::BitAnd
+                            }
+                        }
+                        b'|' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'|' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::Or
+                            } else {
+                                TokenType::BitOr
+                            }
+                        }
+                        b'^' => TokenType::Xor,
+                        b'<' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'<' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::LeftShift
+                            } else if byte_str[l + 1] == b'=' {
+                                l += 1;
+                                TokenType::Leq
+                            } else {
+                                TokenType::Le
+                            }
+                        }
+                        b'>' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'>' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::RightShift
+                            } else if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::Geq
+                            } else {
+                                TokenType::Ge
+                            }
+                        }
+                        b'!' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::Neq
+                            } else {
+                                TokenType::Not
+                            }
+                        }
+                        b'=' => {
+                            if l + 1 < byte_str.len() && byte_str[l + 1] == b'=' {
+                                l += 1;
+                                self.column += 1;
+                                TokenType::Equal
+                            } else {
+                                TokenType::Assign
+                            }
+                        }
+                        _ => panic!("Unreachable!"),
+                    };
+                    let position = Position {
+                        line: self.line,
+                        column: self.column,
+                    };
+
+                    let cur_token = Token {
+                        token_type: tok_type,
+                        position,
                     };
                     tokens.push(cur_token);
+                    l += 1;
+                    self.column += 1;
+                } else if cur_char.is_ascii_digit() {
+                    // Integer case.
+                    r = l + 1;
+
+                    while r < byte_str.len() && byte_str[r].is_ascii_digit() {
+                        r += 1;
+                        self.column += 1;
+                    }
+                    if r >= byte_str.len() || !boundary_characters.contains(&byte_str[r]) {
+                        panic!("An integer starts but has no word boundary character at the end");
+                    } else {
+                        let tok_str = std::str::from_utf8(&byte_str[l..r]).unwrap();
+                        let tok_int = tok_str.parse().unwrap();
+                        let tok_type = TokenType::Constant(tok_int);
+                        let position = Position {
+                            line: self.line,
+                            column: self.column,
+                        };
+                        let cur_token = Token {
+                            token_type: tok_type,
+                            position,
+                        };
+                        tokens.push(cur_token);
+                        self.column += 1;
+                    }
+                    l = r;
+                } else if cur_char.is_ascii_alphabetic() || cur_char == b'_' {
+                    // Identifier case
+                    r = l + 1;
+
+                    while r < byte_str.len()
+                        && (byte_str[r].is_ascii_alphanumeric() || byte_str[r] == b'_')
+                    {
+                        r += 1;
+                        self.column += 1;
+                    }
+                    if r >= byte_str.len() || !boundary_characters.contains(&byte_str[r]) {
+                        panic!("An integer starts but has no word boundary character at the end");
+                    } else {
+                        let tok_type = match &byte_str[l..r] {
+                            INT_KEYWORD => TokenType::Int,
+                            VOID_KEYWORD => TokenType::Void,
+                            RETURN_KEYWORD => TokenType::Return,
+                            identifier => TokenType::Identifier(
+                                String::from_utf8(identifier.to_vec()).expect(""),
+                            ),
+                        };
+                        let position = Position {
+                            line: self.line,
+                            column: self.column,
+                        };
+                        let cur_token = Token {
+                            token_type: tok_type,
+                            position,
+                        };
+                        tokens.push(cur_token);
+                        self.column += 1;
+                    }
+                    l = r;
+                } else {
+                    panic!("Token starting with {}", char::from(cur_char));
                 }
-                l = r;
-            } else {
-                panic!("Token starting with {}", char::from(cur_char));
             }
         }
-    }
 
-    return tokens;
+        return tokens;
+    }
 }
